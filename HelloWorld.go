@@ -36,8 +36,8 @@ func main() {
 	path := gocoa.NSString(".")
 	dict := gocoa.NSDictionary("NSOwner", app)
 
-	bundle = bundle.Call("initWithPath:", path.Pointer)
-	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("HelloWorld").Pointer, dict.Pointer, app.Call("zone").Pointer)
+	bundle = bundle.Call("initWithPath:", path)
+	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("HelloWorld"), dict, app.Call("zone"))
 
 	app.Call("run")
 }
@@ -54,12 +54,12 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	var ix gocoa.NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
 		window := windowsArray.CallI("objectAtIndex:", ix)
-		window.Call("setTitle:", gocoa.NSString("Form Loaded").Pointer)
+		window.Call("setTitle:", gocoa.NSString("Form Loaded"))
 	}
 
-	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
-	textBox1 := me.InstanceVariable("textBox1")
-	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded").Pointer)
+//	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+//	textBox1 := me.InstanceVariable("textBox1")
+//	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded"))
 }
 
 //export IButtonClick
@@ -67,5 +67,5 @@ func IButtonClick(self C.id, op C.SEL, sender C.id) {
 	fmt.Println("buttonClick:")
 	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
 	textBox1 := me.InstanceVariable("textBox1")
-	textBox1.Call("setStringValue:", gocoa.NSString("Button Pushed").Pointer)
+	textBox1.Call("setStringValue:", gocoa.NSString("Button Pushed"))
 }
