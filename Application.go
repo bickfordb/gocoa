@@ -29,13 +29,12 @@ func main() {
 		
 	hellow := gocoa.ClassForName("NSObject").Subclass("ApplicationController")
 	hellow.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
-//	hellow.AddMethod("buttonClick:", IButtonClick)
 	hellow.AddIvar("scrollTable1", gocoa.ClassForName("NSScrollView"))
 	hellow.Register()
 	
 	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString("/Users/david/Desktop/Gocoa/")
+	path := gocoa.NSString(".")
 	dict := gocoa.NSDictionary("NSOwner", app)
 	
 	bundle = bundle.Call("initWithPath:", path.Id())
@@ -65,12 +64,3 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("scrollTable1 class:", scrollTable1.Class().Name())
 //	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded").Id())
 }
-/*
-//export IButtonClick
-func IButtonClick(self C.id, op C.SEL, sender C.id) {
-	fmt.Println("buttonClick:")
-	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
-	textBox1 := me.InstanceVariable("textBox1")
-	textBox1.Call("setStringValue:", gocoa.NSString("Button Pushed").Id())
-}*/
-

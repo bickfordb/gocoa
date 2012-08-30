@@ -35,7 +35,7 @@ func main() {
 	
 	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString("/Users/david/Desktop/Gocoa/")
+	path := gocoa.NSString(".")
 	dict := gocoa.NSDictionary("NSOwner", app)
 	
 	bundle = bundle.Call("initWithPath:", path.Id())

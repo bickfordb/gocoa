@@ -50,16 +50,6 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	view := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
 	view.ListInstanceVariables()
 
-/*	
-Graphics g = Graphics.FromHwnd (this.NativeObject);
-Rectangle r = new Rectangle ((int)this.Bounds.Origin.X, (int)this.Bounds.Origin.Y, (int)this.Bounds.Size.Width, (int)this.Bounds.Size.Height);
-Brush b = new SolidBrush (System.Drawing.Color.Red);
-g.FillRectangle (b, r);
-System.Drawing.Font f = new System.Drawing.Font ("Times New Roman", (int)(this.Bounds.Size.Height/15));
-b = new SolidBrush (System.Drawing.Color.White);
-g.DrawString ("This is System.Drawing Text\non a g.FillRectangle background!\nTry Resizing the Window!", f, b, 10, 10);
-*/
-	
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, aRect)
 	fmt.Println("len(aRectBytes)", len(buf.Bytes()))
@@ -108,7 +98,7 @@ func main() {
 	
 	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString("/Users/david/Desktop/Gocoa/")
+	path := gocoa.NSString(".")
 	dict := gocoa.NSDictionary("NSOwner", app)
 	
 	bundle = bundle.Call("initWithPath:", path.Id())
