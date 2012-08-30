@@ -17,13 +17,11 @@ import (
 * Go may and does spawn main() as a secondary thread in the Mac implementation. TransformProcessType()
 * on the current ProcessSerialNumber allows a unix process to be promoted to a full-fledged Mac app
 * with a UI.
-*/
+ */
 func InitMac() {
-	runtime.LockOSThread() 
+	runtime.LockOSThread()
 	var psn C.ProcessSerialNumber
 	C.GetCurrentProcess(&psn)
 	C.TransformProcessType(&psn, 1)
-	C.SetFrontProcess (&psn)
+	C.SetFrontProcess(&psn)
 }
-
-

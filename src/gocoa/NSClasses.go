@@ -7,43 +7,37 @@ import (
 
 // NSDictionary requires alloc/init
 func NSDictionary(key string, value *Object) *Object {
-	dict := ClassForName("NSDictionary").Instance("alloc").Call("initWithObject:forKey:", value.id, NSString(key).id)
-	return &Object{dict.id}
+	return ClassForName("NSDictionary").Instance("alloc").Call("initWithObject:forKey:", value, NSString(key))
 }
 
 // NSString class method stringWithUTFString is helpful
 func NSString(toNSString string) *Object {
 	cStringPtr := (uintptr)(unsafe.Pointer(C.CString(toNSString)))
-	class := ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr )
-	return &Object{class.id}
+	return ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr)
 }
 
 func GoString(nsString *Object) string {
-	return C.GoString((*C.char)(unsafe.Pointer(nsString.Call("UTF8String").id)))
+	return C.GoString((*C.char)(unsafe.Pointer(nsString.Call("UTF8String").Pointer)))
 }
 
 const (
-	blackColor = "blackColor"
-	blueColor = "blueColor"
-	/*brownColor
-	clearColor
-	cyanColor
-	darkGrayColor
-	grayColor
-	greenColor
-	lightGrayColor
-	magentaColor
-	orangeColor
-	purpleColor*/
-	RedColor = "redColor"
-	whiteColor = "whiteColor"
-	yellowColor = "yellowColor"
+	BlackColor = "blackColor"
+	BlueColor  = "blueColor"
+	BrownColor  = "brownColor"
+	ClearColor  = "clearColor"
+	CyanColor  = "cyanColor"
+	DarkGrayColor  = "darkGrayColor"
+	GrayColor  = "grayColor"
+	GreenColor  = "greenColor"
+	LightGrayColor  = "lightGrayColor"
+	MagentaColor  = "magentaColor"
+	OrangeColor  = "orangeColor"
+	PurpleColor  = "purpleColor"
+	RedColor    = "redColor"
+	WhiteColor  = "whiteColor"
+	YellowColor = "yellowColor"
 )
 
-
 func NSColor(color string) *Object {
-	class := ClassForName("NSColor").Instance(color)
-	return &Object{class.id}
+	return &Object{ClassForName("NSColor").Instance(color).Pointer}
 }
-
-
