@@ -38,7 +38,7 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	simpleView := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", buf.Bytes())
-	return (C.id)(unsafe.Pointer(simpleView.Id()))
+	return (C.id)(unsafe.Pointer(simpleView.Pointer))
 }
 
 //export VDrawRect
@@ -94,8 +94,8 @@ func main() {
 	path := gocoa.NSString(".")
 	dict := gocoa.NSDictionary("NSOwner", app)
 
-	bundle = bundle.Call("initWithPath:", path.Id())
-	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("SimpleView").Id(), dict.Id(), app.Call("zone").Id())
+	bundle = bundle.Call("initWithPath:", path)
+	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("SimpleView"), dict, app.Call("zone"))
 
 	app.Call("run")
 
