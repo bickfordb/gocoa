@@ -1,0 +1,36 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {}; 
+            CLASS = Controller; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {itsView = id; }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            ACTIONS = {showHelp = id; }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = NSOpenGLView; LANGUAGE = ObjC; SUPERCLASS = NSView; }, 
+        {
+            ACTIONS = {interfaceChanged = id; }; 
+            CLASS = SimpleOpenGLView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                itsColorWell0 = id; 
+                itsColorWell1 = id; 
+                itsColorWell2 = id; 
+                itsColorWell3 = id; 
+                itsRotateXSlider = id; 
+                itsRotateYSlider = id; 
+                itsRotateZSlider = id; 
+                itsZoomSlider = id; 
+            }; 
+            SUPERCLASS = NSOpenGLView; 
+        }, 
+        {CLASS = SimpleView; LANGUAGE = ObjC; SUPERCLASS = NSView; }
+    ); 
+    IBVersion = 1; 
+}
