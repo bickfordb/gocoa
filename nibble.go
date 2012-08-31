@@ -226,7 +226,7 @@ func (obj Object) MatchesClassAndKey(class string, key string) (bool, *Object) {
 	return false, nil
 }
 
-
+// XXX MatchesClass and MatchesCustomObject could be the same method. In fact, this is all a mess...
 func (obj Object) MatchesClass(class string) (bool, *Object) {
 	if obj.Class == class {
 		return true, &obj
@@ -235,7 +235,7 @@ func (obj Object) MatchesClass(class string) (bool, *Object) {
 }
 
 func (obj Object) MatchesCustomObject(class string) (bool, *Object) {
-	if obj.Class == "NSCustomObject" {
+	if obj.Class == "NSCustomObject" || obj.Class == "NSCustomView" {
 		for i:=0; i<len(obj.Strings); i++ {
 			if obj.Strings[i].Value == class {
 				return true, &obj
@@ -657,12 +657,26 @@ func DeleteOutlets(v Searchable, class string) {
 }
 
 
+func FindObject(v Searchable, name string) *Object {
+	result := FindCustomObject(v, name)
+	if result == nil {
+		result = FindClass(v, name)
+	}
+	
+	if result == nil {
+		panic("couldn't find object named:" + name)
+	}
+	
+	return result
+}
+
+
 func AddOutlet(v Searchable, name string, classSource string, customObjectDestination string) {
 	
-	source := FindCustomObject(v, classSource)
+	source := FindObject(v, classSource)
 	sourceId, _ := strconv.ParseInt(source.Id, 10, 32)
 	
-	destination := FindClass(v, customObjectDestination)
+	destination := FindObject(v, customObjectDestination)
 	destinationId, _ := strconv.ParseInt(destination.Id, 10, 32)
 	
 	maxId := MaxValueForConnectionId(v) + 1
