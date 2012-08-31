@@ -12,10 +12,25 @@ The code is still rapidly evolving, and as a result does not represent a stable 
 examples
 --------
 
-To run examples use, for example:
+To run any of the examples use, for example:
 
 	export GOPATH=`pwd` 
 	go run HelloWorld.go 
+
+And if you don't like bugs, don't use nibble yet:
+
+	usage: nibble [-a (options)] [-d (options)] [-l class] [input file]
+	
+	        -a outlet|action name source dest
+	            add outlet or action 'name', connect 'source' to 'dest' 
+	        -d class
+	            delete all outlets and actions for 'class'
+	        -l class
+	            list all objects of type 'class'
+			
+	example: "nibble -a outlet mainWindow ApplicationController NSWindowTemplate"
+	         	adds an outlet, 'mainWindow' from ApplicationController to NSWindowTemplate
+
 
 
 license
