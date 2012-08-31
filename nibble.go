@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Reference struct {
@@ -523,9 +524,12 @@ func AddIBConnection(v Searchable, connection Object, connectionID int) {
 }
 
 
-func usage() {
-		usage := 
-`usage: nibble [-a (options)] [-d (options)] [-l class] [input file]
+func usage(err string) {
+	if len(err) > 0 {
+		fmt.Println("nibble:", err)
+	}
+	usage := `
+usage: nibble [-a (options)] [-d (options)] [-l class] [input file]
 	
         -a outlet|action name source dest
             add outlet or action 'name', connect 'source' to 'dest' 
@@ -534,10 +538,11 @@ func usage() {
         -l class
             list all objects of type 'class'
 			
-example: "nibble -a outlet mainWindow ApplicationController NSWindowTemplate"
-         adds an outlet, 'mainWindow' from ApplicationController to NSWindowTemplate
+example: nibble -a outlet mainWindow ApplicationController NSWindowTemplate file.nib
+            adds an outlet, 'mainWindow' from ApplicationController to 
+            NSWindowTemplate in file.nib and prints the output
 `
-		fmt.Println(usage)
+	fmt.Println(usage)
 }
 
 func loadNib(fileName string) Archive {
@@ -548,7 +553,7 @@ func loadNib(fileName string) Archive {
 
 	err = decoder.Decode(&result)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		fmt.Println("error:", err, " fileName:", fileName)
 		return result
 	}
 
@@ -561,7 +566,7 @@ func printNib(archive Archive) {
 
 	output, err := xml.MarshalIndent(&archive, "", "\t")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		fmt.Println("error: ", err)
 		return
 	}
 	fmt.Print(xml.Header)
@@ -571,52 +576,57 @@ func printNib(archive Archive) {
 
 func main() {
 
-	if len(os.Args) < 2 || os.Args[0] == "-help" {
-		usage()
+	if len(os.Args) < 3 || os.Args[1] == "-help" {
+		usage("")
 		return
 	}
 	
-	
-	switch(os.Args[0]) {
+	switch(os.Args[1]) {
 	
 		case "-a":
-			if len(os.Args) == 6 {
-				if os.Args[1] == "outlet" {
-					v := loadNib(os.Args[5])
-					AddOutlet(v.Data, os.Args[2], os.Args[3], os.Args[4])
+			if len(os.Args) == 7 {
+				if os.Args[2] == "outlet" {
+					v := loadNib(os.Args[6])
+					AddOutlet(v.Data, os.Args[3], os.Args[4], os.Args[5])
 					printNib(v)
-				} else if os.Args[1] == "action" {
-					v := loadNib(os.Args[5])
-					AddAction(v.Data, os.Args[2], os.Args[3], os.Args[4])
+				} else if os.Args[2] == "action" {
+					v := loadNib(os.Args[6])
+					AddAction(v.Data, os.Args[3], os.Args[4], os.Args[5])
 					printNib(v)
+				
+/*				} else if os.Args[2] == "appdelegate" {
+					v := loadNib(os.Args[6])
+					AddAppDelegate(v.Data, os.Args[3], os.Args[4], os.Args[5])
+					printNib(v)
+*/					
 				} else {
-					usage()
+					usage(os.Args[2] + ", invalid IBConnection type")
 				}
 			} else {
-				usage()
+				usage("invalid args for -a:" + strings.Join(os.Args, " "))
 			}
 			break
 		case "-d":
-			if len(os.Args) == 3 {
-				v := loadNib(os.Args[2])
-				DeleteOutlets(v.Data, os.Args[1])
+			if len(os.Args) == 4 {
+				v := loadNib(os.Args[3])
+				DeleteOutlets(v.Data, os.Args[2])
 				printNib(v)
 			} else {
-				usage()
+				usage("invalid args for -d:" + strings.Join(os.Args, " "))
 			}
 			break
 		case "-l":
-			if len(os.Args) == 3 {
-				v := loadNib(os.Args[2])
-				ListClasses(v.Data, os.Args[1])
+			if len(os.Args) == 4 {
+				v := loadNib(os.Args[3])
+				ListClasses(v.Data, os.Args[2])
 				
 			} else {
-				usage()
+				usage("invalid args for -l:" + strings.Join(os.Args, " "))
 			}
 			break
 		
 		default: 
-			usage()
+			usage("invalid option:" + os.Args[1])
 	}
 	
 	
@@ -659,6 +669,7 @@ func AddOutlet(v Searchable, name string, classSource string, customObjectDestin
 	
 }
 
+
 func AddAction(v Searchable, action string, customObjectSource string, customObjectDestination string) {
 	
 	source := FindCustomObject(v, customObjectSource)
@@ -670,5 +681,22 @@ func AddAction(v Searchable, action string, customObjectSource string, customObj
 	maxId := MaxValueForConnectionId(v) + 1
 		
 	connection := CreateIBConnection(IBActionConnection, action, int(destinationId), int(sourceId), maxId)
+	AddIBConnection(v, connection, maxId)
+}
+
+/*
+* something else, adding an application delegate
+*/
+func AddAppDelegate(v Searchable, action string, customObjectSource string, customObjectDestination string) {
+	
+	source := FindCustomObject(v, customObjectSource)
+	sourceId, _ := strconv.ParseInt(source.Id, 10, 32)
+	
+	destination := FindCustomObject(v, "NSApplication")
+	destinationId, _ := strconv.ParseInt(destination.Id, 10, 32)
+	
+	maxId := MaxValueForConnectionId(v) + 1
+		
+	connection := CreateIBConnection(IBActionConnection, "delegate", int(destinationId), int(sourceId), maxId)
 	AddIBConnection(v, connection, maxId)
 }

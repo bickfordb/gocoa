@@ -1874,7 +1874,7 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
-						<string key="label">applicationWillFinishLaunching:</string>
+						<string key="label">delegate</string>
 						<reference key="source" ref="1021"></reference>
 						<reference key="destination" ref="889664573"></reference>
 					</object>
