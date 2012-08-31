@@ -412,28 +412,60 @@ func FindObjectByConnectionId(dig Searchable, connectionID string) *Object {
 }
 
 /*
+example from HelloWorld.nib
+421919869 - ApplicationController
+
 <object class="IBObjectContainer" key="IBDocument.Objects">
-	<array class="NSMutableArray" key="connectionRecords">
+	<array class="NSMutableArray" key="connectionRecords">...
 
-		<object class="IBConnectionRecord">
-			<object class="IBActionConnection" key="connection">
-				<string key="label">orderFrontStandardAboutPanel:</string>
-				<reference key="source" ref="1021"/>
-				<reference key="destination" ref="238522557"/>
-			</object>
-			<int key="connectionID">142</int>
-		</object>
-
-		<object class="IBConnectionRecord">
-			<object class="IBOutletConnection" key="connection">
-				<string key="label">delegate</string>
-				<reference key="source" ref="879354517"/>
-				<reference key="destination" ref="889664573"/>
-			</object>
-			<int key="connectionID">884</int>
-		</object>
-
+<object class="IBConnectionRecord">
+	<object class="IBOutletConnection" key="connection">
+		<string key="label">delegate</string>
+		<reference key="source" ref="426487645"/>			'NSApplication - 1'
+		<reference key="destination" ref="421919869"/>		'ApplicationController'
+	</object>
+	<int key="connectionID">255</int>
+</object>
+	
+<object class="IBConnectionRecord">
+	<object class="IBOutletConnection" key="connection">
+		<string key="label">delegate</string>
+		<reference key="source" ref="852095695"/>			'NSWindowTemplate'
+		<reference key="destination" ref="421919869"/>		'ApplicationController'
+	</object>
+	<int key="connectionID">256</int>
+</object>
+	
+<object class="IBConnectionRecord">
+	<object class="IBOutletConnection" key="connection">
+		<string key="label">textBox1</string>
+		<reference key="source" ref="421919869"/>			'ApplicationController'
+		<reference key="destination" ref="388213687"/>		'NSTextField'
+	</object>
+	<int key="connectionID">252</int>
+</object>
+	
+<object class="IBConnectionRecord">
+	<object class="IBOutletConnection" key="connection">
+		<string key="label">mainWindow</string>
+		<reference key="source" ref="421919869"/>			'ApplicationController'
+		<reference key="destination" ref="852095695"/>		'NSWindowTemplate'
+	</object>
+	<int key="connectionID">253</int>
+</object>
+	
+<object class="IBConnectionRecord">
+	<object class="IBActionConnection" key="connection">
+		<string key="label">buttonClick:</string>
+		<reference key="source" ref="421919869"/>			'ApplicationController'
+		<reference key="destination" ref="697635292"/>		'NSButton'
+	</object>
+	<int key="connectionID">257</int>
+</object>
+	
 */
+
+
 
 const (
 	IBOutletConnection = "IBOutletConnection"
@@ -479,6 +511,7 @@ func (obj *Object) IntForKey(name string) *Int {
 }
 
 
+
 func AddIBConnection(v Searchable, connection Object, connectionID int) {
 	objectContainer := FindClassAndKey(v, "IBObjectContainer", "IBDocument.Objects")
 	intMaxID := objectContainer.IntForKey("maxID")
@@ -490,125 +523,152 @@ func AddIBConnection(v Searchable, connection Object, connectionID int) {
 }
 
 
-func main() {
+func usage() {
+		usage := 
+`usage: nibble [-a (options)] [-d (options)] [-l class] [input file]
+	
+        -a outlet|action name source dest
+            add outlet or action 'name', connect 'source' to 'dest' 
+        -d class
+            delete all outlets and actions for 'class'
+        -l class
+            list all objects of type 'class'
+			
+example: "nibble -a outlet mainWindow ApplicationController NSWindowTemplate"
+         adds an outlet, 'mainWindow' from ApplicationController to NSWindowTemplate
+`
+		fmt.Println(usage)
+}
 
-	if len(os.Args) < 3 {
-		fmt.Println("usage\n\tnibedit <inputfile> <outputfile>")
-		return
-	}
+func loadNib(fileName string) Archive {
 
-	v := Archive{Type: "none", Version: "0"}
-	fileName := os.Args[1]
+	result := Archive{Type: "none", Version: "0"}
 	file, err := os.Open(fileName)
 	decoder := xml.NewDecoder(file)
 
-	err = decoder.Decode(&v)
+	err = decoder.Decode(&result)
 	if err != nil {
 		fmt.Printf("error: %v", err)
-		return
+		return result
 	}
 
 	file.Close()
 	
-	// locate the id of the ApplicationController
-/*	
-	<object class="NSCustomObject" id="889664573">
-		<string key="NSClassName">ApplicationController</string>
-	</object>*/
-	
-	appController := FindCustomObject(v.Data, "ApplicationController")
-	appControllerId, _ := strconv.ParseInt(appController.Id, 10, 32)
-	
-	app := FindCustomObject(v.Data, "NSApplication")
-	appId, _ := strconv.ParseInt(app.Id, 10, 32)
-	
-	scrollView := FindClass(v.Data, "NSScrollView")
-	scrollViewId, _ := strconv.ParseInt(scrollView.Id, 10, 32)
-	
-	windowTemplate := FindClass(v.Data, "NSWindowTemplate")
-	windowTemplateId, _ := strconv.ParseInt(windowTemplate.Id, 10, 32)
-	
-	/*
-	421919869 - ApplicationController
-	
-	<object class="IBConnectionRecord">
-		<object class="IBOutletConnection" key="connection">
-			<string key="label">delegate</string>
-			<reference key="source" ref="426487645"/>			'NSApplication - 1'
-			<reference key="destination" ref="421919869"/>		'ApplicationController'
-		</object>
-		<int key="connectionID">255</int>
-	</object>
-	
-	<object class="IBConnectionRecord">
-		<object class="IBOutletConnection" key="connection">
-			<string key="label">delegate</string>
-			<reference key="source" ref="852095695"/>			'NSWindowTemplate'
-			<reference key="destination" ref="421919869"/>		'ApplicationController'
-		</object>
-		<int key="connectionID">256</int>
-	</object>
-	
-	<object class="IBConnectionRecord">
-		<object class="IBOutletConnection" key="connection">
-			<string key="label">textBox1</string>
-			<reference key="source" ref="421919869"/>			'ApplicationController'
-			<reference key="destination" ref="388213687"/>		'NSTextField'
-		</object>
-		<int key="connectionID">252</int>
-	</object>
-	
-	<object class="IBConnectionRecord">
-		<object class="IBOutletConnection" key="connection">
-			<string key="label">mainWindow</string>
-			<reference key="source" ref="421919869"/>			'ApplicationController'
-			<reference key="destination" ref="852095695"/>		'NSWindowTemplate'
-		</object>
-		<int key="connectionID">253</int>
-	</object>
-	
-	<object class="IBConnectionRecord">
-		<object class="IBActionConnection" key="connection">
-			<string key="label">buttonClick:</string>
-			<reference key="source" ref="421919869"/>			'ApplicationController'
-			<reference key="destination" ref="697635292"/>		'NSButton'
-		</object>
-		<int key="connectionID">257</int>
-	</object>
-	
-	*/
-	
-	
-	// add the outlets
-	maxId := MaxValueForConnectionId(v.Data) + 1
-	connection := CreateIBConnection(IBOutletConnection, "scrollTable1", int(appControllerId), int(scrollViewId), maxId)
-	AddIBConnection(v.Data, connection, maxId)
-	maxId++
-	
-	connection = CreateIBConnection(IBOutletConnection, "delegate", int(appId), int(appControllerId), maxId)
-	AddIBConnection(v.Data, connection, maxId)
-	maxId++
-	
-	connection = CreateIBConnection(IBOutletConnection, "delegate", int(windowTemplateId), int(appControllerId), maxId)
-	AddIBConnection(v.Data, connection, maxId)
-	maxId++
-	
-	connection = CreateIBConnection(IBOutletConnection, "mainWindow", int(appControllerId), int(windowTemplateId), maxId)
-	AddIBConnection(v.Data, connection, maxId)
-	maxId++
-	
-//	connection = CreateIBConnection(IBActionConnection, "applicationWillFinishLaunching:", int(appId), int(appControllerId), maxId)
-//	AddIBConnection(v.Data, connection, maxId)
-	
-	
-	// ok, output the difference
-	output, err := xml.MarshalIndent(&v, "", "\t")
+	return result
+}
+
+func printNib(archive Archive) {
+
+	output, err := xml.MarshalIndent(&archive, "", "\t")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return
 	}
-
 	fmt.Print(xml.Header)
 	os.Stdout.Write(output)
+}
 
+
+func main() {
+
+	if len(os.Args) < 2 || os.Args[0] == "-help" {
+		usage()
+		return
+	}
+	
+	
+	switch(os.Args[0]) {
+	
+		case "-a":
+			if len(os.Args) == 6 {
+				if os.Args[1] == "outlet" {
+					v := loadNib(os.Args[5])
+					AddOutlet(v.Data, os.Args[2], os.Args[3], os.Args[4])
+					printNib(v)
+				} else if os.Args[1] == "action" {
+					v := loadNib(os.Args[5])
+					AddAction(v.Data, os.Args[2], os.Args[3], os.Args[4])
+					printNib(v)
+				} else {
+					usage()
+				}
+			} else {
+				usage()
+			}
+			break
+		case "-d":
+			if len(os.Args) == 3 {
+				v := loadNib(os.Args[2])
+				DeleteOutlets(v.Data, os.Args[1])
+				printNib(v)
+			} else {
+				usage()
+			}
+			break
+		case "-l":
+			if len(os.Args) == 3 {
+				v := loadNib(os.Args[2])
+				ListClasses(v.Data, os.Args[1])
+				
+			} else {
+				usage()
+			}
+			break
+		
+		default: 
+			usage()
+	}
+	
+	
+	// the source of an outlet is the custom object, slightly counterintuitive
+/*	AddOutlet(v.Data, "scrollTable1", "ApplicationController", "NSScrollView")
+	AddOutlet(v.Data, "mainWindow", "ApplicationController", "NSWindowTemplate")
+	
+	AddAction(v.Data, "applicationWillFinishLaunching:", "ApplicationController", "NSApplication")*/	
+}
+
+
+
+func ListClasses(v Searchable, name string) {
+
+
+}
+
+
+func DeleteOutlets(v Searchable, class string) {
+
+}
+
+
+func AddOutlet(v Searchable, name string, classSource string, customObjectDestination string) {
+	
+	source := FindCustomObject(v, classSource)
+	sourceId, _ := strconv.ParseInt(source.Id, 10, 32)
+	
+	destination := FindClass(v, customObjectDestination)
+	destinationId, _ := strconv.ParseInt(destination.Id, 10, 32)
+	
+	maxId := MaxValueForConnectionId(v) + 1
+	
+	connection := CreateIBConnection(IBOutletConnection, name, int(sourceId), int(destinationId), maxId)
+	AddIBConnection(v, connection, maxId)
+	maxId++
+	
+	connection = CreateIBConnection(IBOutletConnection, "delegate", int(destinationId), int(sourceId), maxId)
+	AddIBConnection(v, connection, maxId)
+	
+}
+
+func AddAction(v Searchable, action string, customObjectSource string, customObjectDestination string) {
+	
+	source := FindCustomObject(v, customObjectSource)
+	sourceId, _ := strconv.ParseInt(source.Id, 10, 32)
+	
+	destination := FindCustomObject(v, customObjectDestination)
+	destinationId, _ := strconv.ParseInt(destination.Id, 10, 32)
+	
+	maxId := MaxValueForConnectionId(v) + 1
+		
+	connection := CreateIBConnection(IBActionConnection, action, int(destinationId), int(sourceId), maxId)
+	AddIBConnection(v, connection, maxId)
 }

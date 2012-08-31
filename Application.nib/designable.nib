@@ -1851,18 +1851,10 @@
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">delegate</string>
-						<reference key="source" ref="1021"></reference>
+						<reference key="source" ref="497560076"></reference>
 						<reference key="destination" ref="889664573"></reference>
 					</object>
 					<int key="connectionID">886</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">delegate</string>
-						<reference key="source" ref="513744381"></reference>
-						<reference key="destination" ref="889664573"></reference>
-					</object>
-					<int key="connectionID">887</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -1870,10 +1862,26 @@
 						<reference key="source" ref="889664573"></reference>
 						<reference key="destination" ref="513744381"></reference>
 					</object>
+					<int key="connectionID">887</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">delegate</string>
+						<reference key="source" ref="513744381"></reference>
+						<reference key="destination" ref="889664573"></reference>
+					</object>
 					<int key="connectionID">888</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">applicationWillFinishLaunching:</string>
+						<reference key="source" ref="1021"></reference>
+						<reference key="destination" ref="889664573"></reference>
+					</object>
+					<int key="connectionID">889</int>
+				</object>
 			</array>
-			<int key="maxID">888</int>
+			<int key="maxID">889</int>
 			<dictionary class="NSMutableDictionary" key="flattenedProperties">
 				<boolean key="367.IBNSWindowAutoPositionCentersHorizontal" value="NO"></boolean>
 				<boolean key="367.IBNSWindowAutoPositionCentersVertical" value="NO"></boolean>
