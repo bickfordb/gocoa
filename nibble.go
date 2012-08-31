@@ -591,7 +591,7 @@ func main() {
 		case "-a":
 			if os.Args[2] == "outlet" {
 				if len(os.Args) != 7 {
-					usage(os.Args[2] + ", invalid IBConnection type")
+					usage("invalid argument count for outlet")
 					return
 				}
 				v := loadNib(os.Args[6])
@@ -599,7 +599,7 @@ func main() {
 				printNib(v)
 			} else if os.Args[2] == "action" {
 				if len(os.Args) != 7 {
-					usage(os.Args[2] + ", invalid IBConnection type")
+					usage("invalid argument count for action")
 					return
 				}
 				v := loadNib(os.Args[6])
@@ -608,7 +608,7 @@ func main() {
 				
 			} else if os.Args[2] == "appdelegate" {
 				if len(os.Args) != 5 {
-					usage(os.Args[2] + ", invalid IBConnection type")
+					usage("invalid argument count for appdelegate")
 					return
 				}
 				v := loadNib(os.Args[4])
@@ -669,13 +669,12 @@ func AddOutlet(v Searchable, name string, classSource string, customObjectDestin
 	
 	connection := CreateIBConnection(IBOutletConnection, name, int(sourceId), int(destinationId), maxId)
 	AddIBConnection(v, connection, maxId)
-	
 }
 
 
-func AddAction(v Searchable, action string, customObjectSource string, customObjectDestination string) {
+func AddAction(v Searchable, action string, classSource string, customObjectDestination string) {
 	
-	source := FindCustomObject(v, customObjectSource)
+	source := FindClass(v, classSource)
 	sourceId, _ := strconv.ParseInt(source.Id, 10, 32)
 	
 	destination := FindCustomObject(v, customObjectDestination)
@@ -703,3 +702,4 @@ func AddAppDelegate(v Searchable, customObjectSource string) {
 	connection := CreateIBConnection(IBOutletConnection, "delegate", int(destinationId), int(sourceId), maxId)
 	AddIBConnection(v, connection, maxId)
 }
+
