@@ -1272,14 +1272,14 @@
 			<object class="NSWindowTemplate" id="513744381">
 				<int key="NSWindowStyleMask">15</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{196, 240}, {480, 270}}</string>
-				<int key="NSWTFlags">611844096</int>
+				<string key="NSWindowRect">{{182, 614}, {480, 270}}</string>
+				<int key="NSWTFlags">607649792</int>
 				<string key="NSWindowTitle">Window</string>
 				<string key="NSWindowClass">NSWindow</string>
 				<nil key="NSViewClass"/>
 				<nil key="NSUserInterfaceItemIdentifier"/>
 				<object class="NSView" key="NSWindowView" id="414427165">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSCustomView" id="999491364">
@@ -1287,11 +1287,14 @@
 							<int key="NSvFlags">268</int>
 							<string key="NSFrameSize">{480, 270}</string>
 							<reference key="NSSuperview" ref="414427165"/>
+							<reference key="NSWindow"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<string key="NSClassName">SimpleView</string>
 						</object>
 					</array>
 					<string key="NSFrameSize">{480, 270}</string>
+					<reference key="NSSuperview"/>
+					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="999491364"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1920, 1058}}</string>
@@ -3113,6 +3116,8 @@
 				<string key="296.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="297.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="298.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<boolean value="NO" key="367.IBNSWindowAutoPositionCentersHorizontal"/>
+				<boolean value="NO" key="367.IBNSWindowAutoPositionCentersVertical"/>
 				<string key="367.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="367.IBWindowTemplateEditedContentRect">{{307, 836}, {480, 270}}</string>
 				<integer value="1" key="367.NSWindowTemplate.visibleAtLaunch"/>

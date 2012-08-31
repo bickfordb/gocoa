@@ -85,7 +85,7 @@ func (cls *Class) Name() string {
 }
 
 
-func (cls *Class) Superclass() *Class {
+func (cls *Class) Super() *Class {
 	return &Class{(uintptr)(unsafe.Pointer(C.class_getSuperclass(cls.classPointer())))}
 }
 
@@ -150,18 +150,6 @@ type Object struct {
 func (obj *Object) idPointer() C.id {
 	return (C.id)(unsafe.Pointer(obj.Pointer))
 }
-/*
-func (obj *Object) Id() uintptr {
-	return obj.Pointer
-}
-
-func NewObject(object_id uintptr) *Object {
-	return &Object{object_id}
-}
-
-func (obj *Object) AsClass() *Class {
-	return &Class{obj.Pointer}
-}*/
 
 func (obj *Object) getMethod(name string) *Method {
 	sel := C.sel_registerName(C.CString(name))
@@ -317,7 +305,11 @@ func (mthd *Method) Name() string {
 	return C.GoString(C.sel_getName(C.method_getName(mthd.methodPointer())))
 }
 
-/* ivar implementation ************************************************************** */
+/***************************************************************************************
+* Ivar
+* An Ivar is an Objective-C structure describing an instance variable, accessible via
+* object.InstanceVariable(name)
+*/
 
 type Ivar struct{ id uintptr }
 
@@ -334,11 +326,28 @@ func ClassForName(name string) *Class {
 	return &Class{class_id}
 }
 
-
-func NewObject(object_id uintptr) *Object {
+func ObjectForId(object_id uintptr) *Object {
 	return &Object{object_id}
 }
 
+
+/* messaging functions *************************************************************** 
+*
+* There are a few hairy issues with the messaging funtions. First, the C funtion 
+* interface doesn't translate Go variadic functions, which is just as well, because
+* C variadic functions can accept variables of any type.
+*
+* The ultimate solution is to define a type of linked list in C that accepts arbitrary 
+* types, and one Go object method: Call(selector string, args...interface{}) that 
+* iterates over the argument list and uses reflect to unpack the arguments into the C 
+* list, then calls objc_msgSend.
+*
+* As I understand, other platforms possibly including the iPhone may require
+* objc_msgSend_stret and objc_msgSend_fret, and they certainly have slightly different 
+* data types, which will be something for consideration when fixing the following.
+*
+* As of yet, it's a mess of that seems to work.
+*/
 
 // clumsy hacks abound
 func msgSendI(receiver *Object, selector string, number NSUInteger) uintptr {
@@ -359,7 +368,7 @@ type superStruct struct {
 func msgSendSuperR(receiver *Object, selector string, rect C.CGRect) uintptr {
 	var super superStruct
 	super.receiver = receiver.Pointer
-	super.class = receiver.Class().Superclass().Pointer
+	super.class = receiver.Class().Super().Pointer
 	sel := C.sel_registerName(C.CString(selector))
 	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, rect)))
 }
@@ -385,7 +394,7 @@ func msgSend(receiver *Object, selector string, args ...uintptr) uintptr {
 func msgSendSuper(receiver *Object, selector string, args ...uintptr) uintptr {
 	var super superStruct
 	super.receiver = receiver.Pointer
-	super.class = receiver.Class().Superclass().Pointer
+	super.class = receiver.Class().Super().Pointer
 
 	sel := C.sel_registerName(C.CString(selector))
 	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
@@ -394,25 +403,30 @@ func msgSendSuper(receiver *Object, selector string, args ...uintptr) uintptr {
 	return (uintptr)(unsafe.Pointer(C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)))
 }
 
-
-
+/*
+* loadThySelf()
+* Go doesn't support dynamic linking. However, it supports a C interface that supports
+* dynamic linking. And it supports symbol export allowing callbacks into go functions
+* using a C calling convention. So, Go supports dynamic linking. 
+*
+* XXX this function will probably fail with a panic rather than a message when I figure 
+* out why it's unreliable. 
+*/
 func loadThySelf(symbol string) *[0]byte {
 
 	fmt.Println("symbol:", symbol)
 
 	this_process := C.dlopen(nil, C.RTLD_NOW)
-	//	fmt.Println("this_process:", this_process)
-	//	if this_process == C.NULL {
-	//		fmt.Println("error:", C.GoString(C.dlerror()))
-	//	}
-
-	symbol_address := C.dlsym(this_process, C.CString(symbol))
-	fmt.Println("\tsymbol_address:", symbol_address)
-	if symbol_address == nil {
-		fmt.Println("\terror:", C.GoString(C.dlerror()))
+	if this_process == nil {
+		fmt.Println("********** error:", C.GoString(C.dlerror()))
 	}
 
-	defer C.dlclose(this_process)
+	symbol_address := C.dlsym(this_process, C.CString(symbol))
+	if symbol_address == nil {
+		fmt.Println("********** error:", C.GoString(C.dlerror()))
+	}
+
+	C.dlclose(this_process)
 	return (*[0]byte)(unsafe.Pointer(symbol_address))
 }
 
@@ -429,19 +443,5 @@ func trimPackage(typePath string) string {
 	return typePath
 }
 
-// XXX somewhat incomplete 
-func objcArgTypeString(argType string) string {
 
-	switch argType {
-	case "_Ctype_id":
-		return "@"
-	case "_Ctype_SEL":
-		return ":"
-	case "_Ctype_CGRect":
-		return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}"
-	default:
-		return "@"
-	}
-	return ""
-}
 

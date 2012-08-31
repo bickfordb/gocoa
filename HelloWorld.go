@@ -52,7 +52,7 @@ func main() {
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("applicationWillFinishLaunching:")
 
-	notify := gocoa.NewObject((uintptr)(unsafe.Pointer(notification)))
+	notify := gocoa.ObjectForId((uintptr)(unsafe.Pointer(notification)))
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
@@ -63,7 +63,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 		window.Call("setTitle:", gocoa.NSString("Form Loaded"))
 	}
 
-	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+	me := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
 	textBox1 := me.InstanceVariable("textBox1")
 	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded"))
 }
@@ -71,7 +71,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 //export IButtonClick
 func IButtonClick(self C.id, op C.SEL, sender C.id) {
 	fmt.Println("buttonClick:")
-	me := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+	me := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
 	textBox1 := me.InstanceVariable("textBox1")
 	textBox1.Call("setStringValue:", gocoa.NSString("Button Pushed"))
 }

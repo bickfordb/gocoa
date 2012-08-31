@@ -29,13 +29,19 @@ import (
 *
 * One possible solution is trying not to repeatedly call dlopen/dlclose
  */
+ 
+//export BIsOpaque
+func BIsOpaque(self C.id, op C.SEL) C.BOOL {
+	fmt.Println("isOpaque")
+	return (C.BOOL)(1)
+}
 
 //export IInitWithFrame
 func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, aRect)
 
-	simpleView := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+	simpleView := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", buf.Bytes())
 	return (C.id)(unsafe.Pointer(simpleView.Pointer))
@@ -45,8 +51,11 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	fmt.Println("drawRect:")
 
-	view := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+	view := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
 	view.ListInstanceVariables()
+	view.ListMethods()
+	
+	view.Class().Super().ListMethods()
 
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, aRect)
@@ -54,9 +63,14 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	fmt.Println("bytes:", buf.Bytes())
 
 	gocoa.NSColor(gocoa.RedColor).Call("set")
-
+	
+	
+//	"To kill you must know your enemy. And in this case, my enemy, is a varmint."
+	
+	
 	bezier := gocoa.ClassForName("NSBezierPath").Instance("init")
-	//	bezier.ListMethods()
+	bezier.ListMethods()
+	
 	bezier.CallR("fillRect:", buf.Bytes()) // terrible here
 
 }
@@ -64,7 +78,7 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 //export ZWindowResize
 func ZWindowResize(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("windowDidResize:")
-	controller := gocoa.NewObject((uintptr)(unsafe.Pointer(self)))
+	controller := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView := controller.InstanceVariable("itsView")
 	simpleView.Call("invalidateIntrinsicContentSize")
 }
@@ -82,6 +96,7 @@ func main() {
 	view := gocoa.ClassForName("NSView").Subclass("SimpleView")
 	view.AddMethod("initWithFrame:", IInitWithFrame)
 	view.AddMethod("drawRect:", VDrawRect)
+	view.AddMethod("isOpaque", BIsOpaque)		// XXX
 	view.Register()
 
 	controller := gocoa.ClassForName("NSObject").Subclass("Controller")
