@@ -642,12 +642,6 @@ func main() {
 			usage("invalid option:" + os.Args[1])
 	}
 	
-	
-	// the source of an outlet is the custom object, slightly counterintuitive
-/*	AddOutlet(v.Data, "scrollTable1", "ApplicationController", "NSScrollView")
-	AddOutlet(v.Data, "mainWindow", "ApplicationController", "NSWindowTemplate")
-	
-	AddAction(v.Data, "applicationWillFinishLaunching:", "ApplicationController", "NSApplication")*/	
 }
 
 
@@ -675,10 +669,6 @@ func AddOutlet(v Searchable, name string, classSource string, customObjectDestin
 	
 	connection := CreateIBConnection(IBOutletConnection, name, int(sourceId), int(destinationId), maxId)
 	AddIBConnection(v, connection, maxId)
-//	maxId++
-	
-//	connection = CreateIBConnection(IBOutletConnection, "delegate", int(destinationId), int(sourceId), maxId)
-//	AddIBConnection(v, connection, maxId)
 	
 }
 
