@@ -2,7 +2,7 @@ package gocoa
 
 /*
 #cgo CFLAGS: -I/usr/include -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
-#cgo LDFLAGS: -lobjc -framework CoreGraphics
+#cgo LDFLAGS: -lobjc
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>

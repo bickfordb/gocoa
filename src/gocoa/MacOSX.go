@@ -1,10 +1,10 @@
 package gocoa
 
 /*
+#cgo CFLAGS: -I/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Headers/
+#cgo LDFLAGS: -framework ApplicationServices 
 #include <Processes.h>
 */
-// #cgo CFLAGS: -I/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Headers/
-// #cgo LDFLAGS: -framework ApplicationServices 
 import "C"
 
 import (
@@ -12,13 +12,13 @@ import (
 )
 
 /*
-* InitMac() 
+* init() 
 * LockOSThread() is necessary to ensure that cocoa is being called from the main thread,
 * Go may and does spawn main() as a secondary thread in the Mac implementation. TransformProcessType()
 * on the current ProcessSerialNumber allows a unix process to be promoted to a full-fledged Mac app
 * with a UI.
  */
-func InitMac() {
+func init() {
 	runtime.LockOSThread()
 	var psn C.ProcessSerialNumber
 	C.GetCurrentProcess(&psn)

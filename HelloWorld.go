@@ -1,23 +1,16 @@
 package main
 
 /*
-#include <stdlib.h>
+#cgo LDFLAGS: -framework AppKit
 #include <objc/objc-runtime.h>
-#include <CoreGraphics.h>
 */
-//#cgo CFLAGS: -I/usr/include -I/System/Library/Frameworks/Foundation.framework/Versions/C/Headers/ -I/System/Library/Frameworks/AppKit.framework/Versions/C/Headers/ -I/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Headers/ -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
-//#cgo LDFLAGS: -lobjc -framework Foundation -framework AppKit -framework ApplicationServices -framework CoreGraphics
 import "C"
 
 import (
 	"fmt"
-	"gocoa"
+	. "gocoa"
 	"unsafe"
 )
-
-func init() {
-	gocoa.InitMac()
-}
 
 /*
 * main()
@@ -25,22 +18,22 @@ func init() {
  */
 func main() {
 
-	hellow := gocoa.ClassForName("NSObject").Subclass("ApplicationController")
+	hellow := ClassForName("NSObject").Subclass("ApplicationController")
 	hellow.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
 	hellow.AddMethod("buttonClick:", IButtonClick)
-	hellow.AddIvar("textBox1", gocoa.ClassForName("NSTextField"))
+	hellow.AddIvar("textBox1", ClassForName("NSTextField"))
 	hellow.Register()
 
-	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
-	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString(".")
-	dict := gocoa.NSDictionary("NSOwner", app)
+	app := ClassForName("NSApplication").Instance("sharedApplication")
+	bundle := ClassForName("NSBundle").Instance("alloc")
+	path := NSString(".")
+	dict := NSDictionary("NSOwner", app)
 
 	bundle = bundle.Call("initWithPath:", path)
-	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("HelloWorld"), dict, app.Call("zone"))
+	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("HelloWorld"), dict, app.Call("zone"))
 	
-	icon := gocoa.ClassForName("NSImage").Instance("alloc")
-	icon = icon.Call("initByReferencingFile:", gocoa.NSString("go.icns"))
+	icon := ClassForName("NSImage").Instance("alloc")
+	icon = icon.Call("initByReferencingFile:", NSString("go.icns"))
 	app.Call("setApplicationIconImage:", icon)
 	
 	app.Call("run")
@@ -50,26 +43,26 @@ func main() {
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("applicationWillFinishLaunching:")
 
-	notify := gocoa.ObjectForId((uintptr)(unsafe.Pointer(notification)))
+	notify := ObjectForId((uintptr)(unsafe.Pointer(notification)))
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
-	windowsCount := (gocoa.NSUInteger)(windowsArray.Call("count").Pointer)
-	var ix gocoa.NSUInteger
+	windowsCount := (NSUInteger)(windowsArray.Call("count").Pointer)
+	var ix NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
 		window := windowsArray.CallI("objectAtIndex:", ix)
-		window.Call("setTitle:", gocoa.NSString("Form Loaded"))
+		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 
-	me := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	textBox1 := me.InstanceVariable("textBox1")
-	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded"))
+	textBox1.Call("setStringValue:", NSString("Form Loaded"))
 }
 
 //export IButtonClick
 func IButtonClick(self C.id, op C.SEL, sender C.id) {
 	fmt.Println("buttonClick:")
-	me := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	textBox1 := me.InstanceVariable("textBox1")
-	textBox1.Call("setStringValue:", gocoa.NSString("Button Pushed"))
+	textBox1.Call("setStringValue:", NSString("Button Pushed"))
 }

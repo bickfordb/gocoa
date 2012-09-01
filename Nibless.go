@@ -7,10 +7,6 @@ import (
 	. "gocoa"
 )
 
-func init() {
-	InitMac()
-}
-
 /*
 * main()
 * A minimal nibless Cocoa application, bypasses Interface Builder

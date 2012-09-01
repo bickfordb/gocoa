@@ -1,8 +1,6 @@
 package gocoa
 
-/*
-#include <CoreGraphics.h>
-*/
+//#include <CoreGraphics.h>
 import "C"
 
 

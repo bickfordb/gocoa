@@ -1,19 +1,18 @@
 package main
 
 /*
-#include <stdlib.h>
+#cgo CFLAGS: -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
+#cgo LDFLAGS: -framework AppKit 
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 */
-//#cgo CFLAGS: -I/usr/include -I/System/Library/Frameworks/Foundation.framework/Versions/C/Headers/ -I/System/Library/Frameworks/AppKit.framework/Versions/C/Headers/ -I/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Headers/ -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
-//#cgo LDFLAGS: -lobjc -framework Foundation -framework AppKit -framework ApplicationServices -framework CoreGraphics
 import "C"
 
 import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"gocoa"
+	. "gocoa"
 	"unsafe"
 )
 
@@ -41,7 +40,7 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, aRect)
 
-	simpleView := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	simpleView := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", buf.Bytes())
 	return (C.id)(unsafe.Pointer(simpleView.Pointer))
@@ -51,7 +50,7 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	fmt.Println("drawRect:")
 
-	view := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	view := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	view.ListInstanceVariables()
 	view.ListMethods()
 	
@@ -62,13 +61,13 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	fmt.Println("len(aRectBytes)", len(buf.Bytes()))
 	fmt.Println("bytes:", buf.Bytes())
 
-	gocoa.NSColor(gocoa.RedColor).Call("set")
+	NSColor(RedColor).Call("set")
 	
 	
 //	"To kill you must know your enemy. And in this case, my enemy, is a varmint."
 	
 	
-	bezier := gocoa.ClassForName("NSBezierPath").Instance("init")
+	bezier := ClassForName("NSBezierPath").Instance("init")
 	bezier.ListMethods()
 	
 	bezier.CallR("fillRect:", buf.Bytes()) // terrible here
@@ -78,13 +77,9 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 //export ZWindowResize
 func ZWindowResize(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("windowDidResize:")
-	controller := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	controller := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView := controller.InstanceVariable("itsView")
 	simpleView.Call("invalidateIntrinsicContentSize")
-}
-
-func init() {
-	gocoa.InitMac()
 }
 
 /*
@@ -93,24 +88,24 @@ func init() {
  */
 func main() {
 
-	view := gocoa.ClassForName("NSView").Subclass("SimpleView")
+	view := ClassForName("NSView").Subclass("SimpleView")
 	view.AddMethod("initWithFrame:", IInitWithFrame)
 	view.AddMethod("drawRect:", VDrawRect)
 	view.AddMethod("isOpaque", BIsOpaque)		// XXX
 	view.Register()
 
-	controller := gocoa.ClassForName("NSObject").Subclass("Controller")
+	controller := ClassForName("NSObject").Subclass("Controller")
 	controller.AddMethod("windowDidResize:", ZWindowResize)
 	controller.AddIvar("itsView", view)
 	controller.Register()
 
-	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
-	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString(".")
-	dict := gocoa.NSDictionary("NSOwner", app)
+	app := ClassForName("NSApplication").Instance("sharedApplication")
+	bundle := ClassForName("NSBundle").Instance("alloc")
+	path := NSString(".")
+	dict := NSDictionary("NSOwner", app)
 
 	bundle = bundle.Call("initWithPath:", path)
-	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("SimpleView"), dict, app.Call("zone"))
+	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
 
 	app.Call("run")
 

@@ -1,42 +1,35 @@
 package main
 
 /*
-#include <stdlib.h>
+#cgo LDFLAGS: -framework AppKit 
 #include <objc/objc-runtime.h>
-#include <CoreGraphics.h>
 */
-//#cgo CFLAGS: -I/usr/include -I/System/Library/Frameworks/Foundation.framework/Versions/C/Headers/ -I/System/Library/Frameworks/AppKit.framework/Versions/C/Headers/ -I/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/Headers/ -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
-//#cgo LDFLAGS: -lobjc -framework Foundation -framework AppKit -framework ApplicationServices -framework CoreGraphics
 import "C"
 
 import (
 	"fmt"
-	"gocoa"
+	. "gocoa"
 	"unsafe"
 )
 
-func init() {
-	gocoa.InitMac()
-}
-
 /*
 * main()
-* Main function for testing
+* a simple application with a datagrid in a scrollview
  */
 func main() {
 
-	hellow := gocoa.ClassForName("NSObject").Subclass("ApplicationController")
+	hellow := ClassForName("NSObject").Subclass("ApplicationController")
 	hellow.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
-	hellow.AddIvar("scrollTable1", gocoa.ClassForName("NSScrollView"))
+	hellow.AddIvar("scrollTable1", ClassForName("NSScrollView"))
 	hellow.Register()
 
-	app := gocoa.ClassForName("NSApplication").Instance("sharedApplication")
-	bundle := gocoa.ClassForName("NSBundle").Instance("alloc")
-	path := gocoa.NSString(".")
-	dict := gocoa.NSDictionary("NSOwner", app)
+	app := ClassForName("NSApplication").Instance("sharedApplication")
+	bundle := ClassForName("NSBundle").Instance("alloc")
+	path := NSString(".")
+	dict := NSDictionary("NSOwner", app)
 
 	bundle = bundle.Call("initWithPath:", path)
-	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("Application"), dict, app.Call("zone"))
+	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("Application"), dict, app.Call("zone"))
 
 	app.Call("run")
 }
@@ -45,19 +38,19 @@ func main() {
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("applicationWillFinishLaunching:")
 
-	notify := gocoa.ObjectForId((uintptr)(unsafe.Pointer(notification)))
+	notify := ObjectForId((uintptr)(unsafe.Pointer(notification)))
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
-	windowsCount := (gocoa.NSUInteger)(windowsArray.Call("count").Pointer)
-	var ix gocoa.NSUInteger
+	windowsCount := (NSUInteger)(windowsArray.Call("count").Pointer)
+	var ix NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
 		window := windowsArray.CallI("objectAtIndex:", ix)
-		window.Call("setTitle:", gocoa.NSString("Form Loaded"))
+		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 
-	me := gocoa.ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	scrollTable1 := me.InstanceVariable("scrollTable1")
 	fmt.Println("scrollTable1 class:", scrollTable1.Class().Name())
-	//	textBox1.Call("setStringValue:", gocoa.NSString("Form Loaded"))
+	//	textBox1.Call("setStringValue:", NSString("Form Loaded"))
 }
