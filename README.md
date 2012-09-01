@@ -12,7 +12,7 @@ The code is still rapidly evolving, and as a result does not represent a stable 
 examples
 --------
 
-HeloWorld.go demonstrates messaging and events between code written in Go and UI elements defined in Interface Builder.
+HelloWorld.go demonstrates messaging and events between code written in Go and UI elements defined in Interface Builder.
 
 SimpleView.go (broken) displays a subclass NSView defined in Interface Builder and responds to drawRect: requests from NSApplication.
 
