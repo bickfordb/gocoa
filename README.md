@@ -47,11 +47,18 @@ reasoning
 
 Rob Pike has gone to great lengths to evangelize Go, and in particular, its current feature set as being carefully designed to leave out those language features that introduce complexity that bears a cost greater than their utility. So the notion of trying to add a smalltalk style object runtime is likely to upset some people who've embraced the Go idea. On the other hand, how else am I going to write a Mac application?
 
-Given that Go was not designed with either objects or dynamic loading in mind, there's a great deal of conceptual impedance mismatch. However, the Objective-C runtime has a fairly straightforward C interface. Even still, I think it would probably be easier to add a new object runtime to Go (Objective-Go?) than to retrofit this existing one. I've read some papers on small runtimes for GNUStep that are interesting (the perennial problem that new Objective-C implementations face is how to get garbage collection). 
+Given that Go was not designed with either objects or dynamic loading in mind, there's some conceptual impedance mismatch. However, the Objective-C runtime has a fairly straightforward C interface, and bridging that interface is certainly enough to use Cocoa effectively from within Go.
 
-As an aside: whether Go needs OOP features or not is the subject of all these mailing list gripes. My thinking is, why are people always begging the Go maintainers for OOP features? The runtime source is available, the thing is well understood, it's a neat pet project to build for yourself.
 
-I looked at several Objective-C bridges before choosing a strategy, and my thinking was most influenced by Cocoa#. Although C# supports all sorts of constructs irrelevant to Go, and although Cocoa# reimplements features everywhere with a peer infrastructure, the convention is to build out from the C interface to the Objective-C runtime. When I looked at other projects, PyObjC in particular, a lot of unnecessary peer code is being written in Objective-C, and that looks like it might have been the maintenance headache that eventually led to bit rot.
+scope
+-----
 
-With gocoa, I'm working toward solutions to similar problems that allow me to write less code, without generating additional dependencies, and to write everything in Go (failing that, Go and cgo).
+With gocoa, I'm working toward a solution that allows me to write less code, without generating runtime dependencies on additional libraries and tools. I'm also interested in things like the iPhone and GNUStep and Étoilé, so while I've seen other work in this area, I'm solving for the general case.
 
+I looked at several Objective-C bridges before choosing a strategy, and my thinking was most influenced by Cocoa# from the mono project. Although C# supports all sorts of constructs irrelevant to Go, and although Cocoa# unnecessarily reimplements features everywhere with an extensive peer infrastructure, the convention is to build out from the C interface to the Objective-C runtime.
+
+In studying other projects, I noticed that in each of them a lot of unnecessary peer code was written, and that looks like a maintenance headache that will eventually lead to bit rot. If you must have peers, use a tool to generate lightweight ones using introspection at runtime in your target language. Don't write them, you're probably just wasting time handcrafting bugs.
+
+I think it would probably be easier to add a new object runtime to Go (Objective-Go?) than to retrofit this existing one. I've read some papers on very small runtimes that are interesting. OTOH, I don't yet have a strong argument for one.
+
+Whether Go needs OOP features or not is the subject of plenty of mailing list gripes. My thinking is: it's unreasonable to ask somebody else to build and maintain something that you want for yourself, and similarly unreasonable to ask someone to understand and then maintain something for you. 
