@@ -587,36 +587,37 @@ func main() {
 	}
 	
 	switch(os.Args[1]) {
-	
 		case "-a":
-			if os.Args[2] == "outlet" {
-				if len(os.Args) != 7 {
-					usage("invalid argument count for outlet")
-					return
-				}
-				v := loadNib(os.Args[6])
-				AddOutlet(v.Data, os.Args[3], os.Args[4], os.Args[5])
-				printNib(v)
-			} else if os.Args[2] == "action" {
-				if len(os.Args) != 7 {
-					usage("invalid argument count for action")
-					return
-				}
-				v := loadNib(os.Args[6])
-				AddAction(v.Data, os.Args[3], os.Args[4], os.Args[5])
-				printNib(v)
-				
-			} else if os.Args[2] == "appdelegate" {
-				if len(os.Args) != 5 {
-					usage("invalid argument count for appdelegate")
-					return
-				}
-				v := loadNib(os.Args[4])
-				AddAppDelegate(v.Data, os.Args[3])
-				printNib(v)
-				
-			} else {
-				usage("invalid args for -a:" + strings.Join(os.Args, " "))
+			switch(os.Args[2]) {
+				case "outlet":
+					if len(os.Args) != 7 {
+						usage("invalid argument count for outlet")
+						return
+					}
+					v := loadNib(os.Args[6])
+					AddOutlet(v.Data, os.Args[3], os.Args[4], os.Args[5])
+					printNib(v)
+					break
+				case "action":
+					if len(os.Args) != 7 {
+						usage("invalid argument count for action")
+						return
+					}
+					v := loadNib(os.Args[6])
+					AddAction(v.Data, os.Args[3], os.Args[4], os.Args[5])
+					printNib(v)
+					break
+				case "appdelegate":
+					if len(os.Args) != 5 {
+						usage("invalid argument count for appdelegate")
+						return
+					}
+					v := loadNib(os.Args[4])
+					AddAppDelegate(v.Data, os.Args[3])
+					printNib(v)
+					break
+				default:
+					usage("invalid args for -a:" + strings.Join(os.Args, " "))
 			}
 			break
 		case "-d":
