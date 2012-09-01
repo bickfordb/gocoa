@@ -2,6 +2,12 @@ package gocoa
 
 //#include <CoreGraphics.h>
 import "C"
+import (
+	"bytes"
+	"encoding/binary"
+//	"strings"
+	"strconv"
+)
 
 func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
 	return NSRect{Origin: NSPoint{X, Y}, Size: NSSize{Width, Height}}
@@ -22,21 +28,40 @@ type NSPoint struct {
 	Y float64
 }
 
-func ToNSRect(cgrect C.CGRect) *NSRect {
-	var result NSRect
 
-	return &result
+func TypeNSRect(cgrect interface{}) NSRect {
+	var result NSRect
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, cgrect)
+	binary.Read(buf, binary.LittleEndian, &result)
+	return result
+}
+
+/*
+
+func (nsr *NSRect) Write() {
+
+}*/
+
+func (nsr *NSRect) String() string {
+	result := "["
+	result = result + strconv.FormatFloat(nsr.Origin.X, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Origin.Y, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Width, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Height, 'e',  -1, 64) + "]"
+	return result
 }
 
 func (nsr *NSRect) Bytes() []byte {
-	var result []byte
-
-	return result
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, nsr)
+	return buf.Bytes()
 }
 
 func (nsr *NSRect) CGRect() C.CGRect {
 	var result C.CGRect
-
+	buf := bytes.NewBuffer(nsr.Bytes())
+	binary.Read(buf, binary.LittleEndian, result)
 	return result
 }
 

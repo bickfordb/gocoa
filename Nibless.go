@@ -20,7 +20,7 @@ func main() {
 	app.Call("setMainMenu:", menubar)
 	appMenu := ClassForName("NSMenu").Instance("new")
 	appName := ClassForName("NSProcessInfo").Instance("processInfo").Call("processName")
-	quitTitle := NSString("Quit").Call("stringByAppendingString:", appName)
+	quitTitle := NSString("Quit ").Call("stringByAppendingString:", appName)
 	quitMenuItem := ClassForName("NSMenuItem").Instance("alloc")
 //	third argument wants: app.Selector("terminate:")
 	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, &Object{0}, NSString("q"))

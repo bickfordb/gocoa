@@ -9,8 +9,6 @@ package main
 import "C"
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	. "gocoa"
 	"unsafe"
@@ -22,11 +20,7 @@ import (
 * If all are named similarly, only one is found. If they are dissimilar enough in their first
 * character, they apparently can be loaded.
 *
-* Possibly, there's some asynchronous operation that requires the time to iterate over the
-* symbol table between calls, and maybe changing the name exposes that behavior.
-*		solution: calling dlopen in a blocking goroutine with a wait() call?
-*
-* One possible solution is trying not to repeatedly call dlopen/dlclose
+* I have a bug open that may be resolved with some coming linker changes, remains to be seen.
  */
  
 //export BIsOpaque
@@ -37,40 +31,33 @@ func BIsOpaque(self C.id, op C.SEL) C.BOOL {
 
 //export IInitWithFrame
 func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, aRect)
-
+//	buf := new(bytes.Buffer)
+//	binary.Write(buf, binary.LittleEndian, aRect)
+	rect := TypeNSRect(aRect)
+	
 	simpleView := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
-	simpleView = simpleView.CallSuperR("initWithFrame:", buf.Bytes())
+	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
 	return (C.id)(unsafe.Pointer(simpleView.Pointer))
 }
 
 //export VDrawRect
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
-	fmt.Println("drawRect:")
+	rect := TypeNSRect(aRect)
+	fmt.Println("drawRect:", rect.String())
+		
+//	view := ObjectForId((uintptr)(unsafe.Pointer(self)))
+//	view.ListInstanceVariables()
+//	view.ListMethods()
+//	view.Class().Super().ListMethods()
 
-	view := ObjectForId((uintptr)(unsafe.Pointer(self)))
-	view.ListInstanceVariables()
-	view.ListMethods()
-	
-	view.Class().Super().ListMethods()
-
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, aRect)
-	fmt.Println("len(aRectBytes)", len(buf.Bytes()))
-	fmt.Println("bytes:", buf.Bytes())
-
-	NSColor(RedColor).Call("set")
-	
-	
 //	"To kill you must know your enemy. And in this case, my enemy, is a varmint."
 	
-	
 	bezier := ClassForName("NSBezierPath").Instance("init")
-	bezier.ListMethods()
+//	bezier.ListMethods()
+	NSColor(RedColor).Call("set")
 	
-	bezier.CallR("fillRect:", buf.Bytes()) // terrible here
+	bezier.CallR("fillRect:",rect) 
 
 }
 

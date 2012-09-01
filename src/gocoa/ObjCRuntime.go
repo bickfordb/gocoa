@@ -1,7 +1,7 @@
 package gocoa
 
 /*
-#cgo CFLAGS: -I/usr/include -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
+#cgo CFLAGS: -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
 #cgo LDFLAGS: -lobjc
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,11 +46,8 @@ static inline id gocoa_objc_msgSendSuper(struct objc_super *super, SEL op, id me
 import "C"
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"unsafe"
-
 	"math"
 	"reflect"
 	"runtime"
@@ -137,8 +134,7 @@ type Object struct {
 	Pointer uintptr
 }
 
-// XXX name collision in C.types, can't use C.Object, need to create a namespace
-// however, C.types seem to coerce
+// XXX name collision in C.types, can't use C.Object
 func (obj *Object) idPointer() C.id {
 	return (C.id)(unsafe.Pointer(obj.Pointer))
 }
@@ -152,46 +148,6 @@ func (obj *Object) getMethod(name string) *Method {
 func (obj *Object) Class() *Class {
 	object_id := (uintptr)(unsafe.Pointer(C.object_getClass(obj.idPointer())))
 	return &Class{object_id}
-}
-
-// XXX should take arguments 
-func (obj *Object) Init() *Object {
-	sel := C.sel_registerName(C.CString("init"))
-	return &Object{(uintptr)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))}
-}
-
-func (obj *Object) CallR(method string, arg []byte) *Object {
-	var copiedArg C.CGRect
-	buf := bytes.NewBuffer(arg)
-	/*	err := */ binary.Read(buf, binary.LittleEndian, copiedArg)
-	return &Object{msgSendR(obj, method, copiedArg)}
-}
-
-func (obj *Object) CallI(method string, arg NSUInteger) *Object {
-	return &Object{msgSendI(obj, method, arg)}
-}
-
-func (obj *Object) Call(method string, args ...*Object) *Object {
-	outArgs := make([]uintptr, len(args))
-	for i := 0; i < len(args); i++ {
-		outArgs[i] = args[i].Pointer
-	}
-	return &Object{msgSend(obj, method, outArgs...)}
-}
-
-func (obj *Object) CallSuper(method string, args ...*Object) *Object {
-	outArgs := make([]uintptr, len(args))
-	for i := 0; i < len(args); i++ {
-		outArgs[i] = args[i].Pointer
-	}
-	return &Object{msgSendSuper(obj, method, outArgs...)}
-}
-
-func (obj *Object) CallSuperR(method string, arg []byte) *Object {
-	var copiedArg C.CGRect
-	buf := bytes.NewBuffer(arg)
-	/*	err := */ binary.Read(buf, binary.LittleEndian, copiedArg)
-	return &Object{msgSendSuperR(obj, method, copiedArg)}
 }
 
 // XXX this does not necessarily return an object pointer
@@ -236,7 +192,8 @@ func (cls *Class) AddMethod(methodName string, implementor interface{}) bool {
 		numArgs := v.Type().NumIn()
 
 		if v.Type().NumOut() == 1 {
-			types = "@"
+			types = objcArgTypeString(trimPackage(v.Type().Out(0).String()))
+			fmt.Println("typeout:", types)
 		}
 
 		for i := 0; i < numArgs; i++ {
@@ -383,9 +340,9 @@ func msgSendI(receiver *Object, selector string, number NSUInteger) uintptr {
 	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendI(receiver.idPointer(), sel, (C.long)(number))))
 }
 
-func msgSendR(receiver *Object, selector string, rect C.CGRect) uintptr {
+func msgSendR(receiver *Object, selector string, rect NSRect) uintptr {
 	sel := C.sel_registerName(C.CString(selector))
-	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendR(receiver.idPointer(), sel, rect)))
+	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendR(receiver.idPointer(), sel, rect.CGRect())))
 }
 
 type superStruct struct {
@@ -393,12 +350,12 @@ type superStruct struct {
 	class    uintptr
 }
 
-func msgSendSuperR(receiver *Object, selector string, rect C.CGRect) uintptr {
+func msgSendSuperR(receiver *Object, selector string, rect NSRect) uintptr {
 	var super superStruct
 	super.receiver = receiver.Pointer
 	super.class = receiver.Class().Super().Pointer
 	sel := C.sel_registerName(C.CString(selector))
-	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, rect)))
+	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, rect.CGRect())))
 }
 
 /*
@@ -430,6 +387,37 @@ func msgSendSuper(receiver *Object, selector string, args ...uintptr) uintptr {
 	}
 	return (uintptr)(unsafe.Pointer(C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)))
 }
+
+
+
+func (obj *Object) CallR(method string, arg NSRect) *Object {
+	return &Object{msgSendR(obj, method, arg)}
+}
+
+func (obj *Object) CallI(method string, arg NSUInteger) *Object {
+	return &Object{msgSendI(obj, method, arg)}
+}
+
+func (obj *Object) Call(method string, args ...*Object) *Object {
+	outArgs := make([]uintptr, len(args))
+	for i := 0; i < len(args); i++ {
+		outArgs[i] = args[i].Pointer
+	}
+	return &Object{msgSend(obj, method, outArgs...)}
+}
+
+func (obj *Object) CallSuper(method string, args ...*Object) *Object {
+	outArgs := make([]uintptr, len(args))
+	for i := 0; i < len(args); i++ {
+		outArgs[i] = args[i].Pointer
+	}
+	return &Object{msgSendSuper(obj, method, outArgs...)}
+}
+
+func (obj *Object) CallSuperR(method string, arg NSRect) *Object {
+	return &Object{msgSendSuperR(obj, method, arg)}
+}
+
 
 /*
 * loadThySelf()
