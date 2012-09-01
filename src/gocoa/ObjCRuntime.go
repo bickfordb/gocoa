@@ -50,7 +50,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"unsafe"
-	
+
 	"math"
 	"reflect"
 	"runtime"
@@ -59,47 +59,39 @@ import (
 
 /* class implementation ********************************************************************/
 
-type Class struct{
+type Class struct {
 	Pointer uintptr
 }
-
 
 func (cls *Class) classPointer() C.Class {
 	return (C.Class)(unsafe.Pointer(cls.Pointer))
 }
 
-
 func (cls *Class) idPointer() C.id {
 	return (C.id)(unsafe.Pointer(cls.Pointer))
 }
-
 
 func (cls *Class) respondsTo(selector string) bool {
 	sel := C.sel_registerName(C.CString(selector))
 	return (C.class_respondsToSelector(cls.classPointer(), sel) == 1)
 }
 
-
 func (cls *Class) Name() string {
 	return C.GoString(C.class_getName(cls.classPointer()))
 }
-
 
 func (cls *Class) Super() *Class {
 	return &Class{(uintptr)(unsafe.Pointer(C.class_getSuperclass(cls.classPointer())))}
 }
 
-
 func (cls *Class) Instance(calling string, args ...uintptr) *Object {
 	return &Object{msgSend(&Object{cls.Pointer}, calling, args...)}
 }
-
 
 func (cls *Class) Method(name string) *Method {
 	sel := C.sel_registerName(C.CString(name))
 	return &Method{(uintptr)(unsafe.Pointer(C.class_getClassMethod(cls.classPointer(), sel)))}
 }
-
 
 func (cls *Class) ListInstanceVariables() {
 
@@ -180,7 +172,6 @@ func (obj *Object) CallI(method string, arg NSUInteger) *Object {
 }
 
 func (obj *Object) Call(method string, args ...*Object) *Object {
-//	var outArgs [len(args)]uintptr
 	outArgs := make([]uintptr, len(args))
 	for i := 0; i < len(args); i++ {
 		outArgs[i] = args[i].Pointer
@@ -208,7 +199,7 @@ func (obj *Object) InstanceVariable(name string) *Object {
 	var val uintptr
 	ivar := C.object_getInstanceVariable(obj.idPointer(), C.CString(name), (*unsafe.Pointer)(unsafe.Pointer(&val)))
 	typeenc := C.GoString(C.ivar_getTypeEncoding(ivar))
-	
+
 	if typeenc == "@" {
 		return &Object{val}
 	}
@@ -243,11 +234,11 @@ func (cls *Class) AddMethod(methodName string, implementor interface{}) bool {
 		types := "v"
 		impName := trimPackage(runtime.FuncForPC(v.Pointer()).Name())
 		numArgs := v.Type().NumIn()
-		
+
 		if v.Type().NumOut() == 1 {
 			types = "@"
 		}
-		
+
 		for i := 0; i < numArgs; i++ {
 			argType := trimPackage(v.Type().In(i).String())
 			types = types + objcArgTypeString(argType)
@@ -257,10 +248,10 @@ func (cls *Class) AddMethod(methodName string, implementor interface{}) bool {
 		sel := C.sel_registerName(C.CString(methodName))
 		imp := loadThySelf(impName)
 		result := C.class_addMethod(cls.classPointer(), sel, imp, C.CString(types))
-		
+
 		return (result == 1)
 	}
-	
+
 	return false
 }
 
@@ -278,11 +269,9 @@ func (cls *Class) Register() {
 	C.objc_registerClassPair(cls.classPointer())
 }
 
-
-
 /* method implementation ************************************************************** */
 
-type Method struct{
+type Method struct {
 	Pointer uintptr
 }
 
@@ -309,7 +298,7 @@ func (mthd *Method) Name() string {
 * Ivar
 * An Ivar is an Objective-C structure describing an instance variable, accessible via
 * object.InstanceVariable(name)
-*/
+ */
 
 type Ivar struct{ id uintptr }
 
@@ -317,11 +306,10 @@ func (ivr *Ivar) Name() string {
 	return C.GoString(C.ivar_getName((C.Ivar)(unsafe.Pointer(ivr.id))))
 }
 
-
 /* property methods ********************************************************************/
 
-type Property struct{
-	Value 	C.objc_property_t
+type Property struct {
+	Value C.objc_property_t
 }
 
 func (prop *Property) Name() string {
@@ -338,31 +326,29 @@ func (cls *Class) Property(name string) *Property {
 	if result == nil {
 		return nil
 	}
-	return &Property{ Value:result }
+	return &Property{Value: result}
 }
 
 func (cls *Class) ListProperties() {
-	
+
 	fmt.Println(cls.Name(), ": properties")
 
 	var outCount C.uint
 	var properties []C.objc_property_t
 
 	p := (C.class_copyPropertyList(cls.classPointer(), &outCount))
-		
+
 	if p != nil {
 		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := Property{ properties[i] }
+			tmp := Property{properties[i]}
 			fmt.Println("\t", tmp.Name(), "(", tmp.Attributes(), ")")
 		}
 		C.free(unsafe.Pointer(p))
 	}
 }
 
-
 /* utility methods ********************************************************************/
-
 
 func ClassForName(name string) *Class {
 	class_id := (uintptr)(unsafe.Pointer(C.objc_getClass(C.CString(name))))
@@ -372,7 +358,6 @@ func ClassForName(name string) *Class {
 func ObjectForId(object_id uintptr) *Object {
 	return &Object{object_id}
 }
-
 
 /* messaging functions *************************************************************** 
 *
@@ -390,7 +375,7 @@ func ObjectForId(object_id uintptr) *Object {
 * data types, which will be something for consideration when fixing the following.
 *
 * As of yet, it's a mess of that seems to work.
-*/
+ */
 
 // clumsy hacks abound
 func msgSendI(receiver *Object, selector string, number NSUInteger) uintptr {
@@ -454,7 +439,7 @@ func msgSendSuper(receiver *Object, selector string, args ...uintptr) uintptr {
 *
 * XXX this function will probably fail with a panic rather than a message when I figure 
 * out why it's unreliable. 
-*/
+ */
 func loadThySelf(symbol string) *[0]byte {
 
 	fmt.Println("symbol:", symbol)
@@ -473,11 +458,10 @@ func loadThySelf(symbol string) *[0]byte {
 	return (*[0]byte)(unsafe.Pointer(symbol_address))
 }
 
-
 /*
 * trimPackage()
 * Trim the leading package name (up to including the last index of "."), leave the type
-*/
+ */
 func trimPackage(typePath string) string {
 
 	if i := strings.LastIndex(typePath, "."); i != -1 {
@@ -485,6 +469,3 @@ func trimPackage(typePath string) string {
 	}
 	return typePath
 }
-
-
-

@@ -3,24 +3,23 @@ package gocoa
 //#include <CoreGraphics.h>
 import "C"
 
-
 func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
-	return NSRect{ Origin: NSPoint{ X, Y }, Size: NSSize{ Width, Height } }
+	return NSRect{Origin: NSPoint{X, Y}, Size: NSSize{Width, Height}}
 }
 
 type NSRect struct {
-	Origin	NSPoint
-	Size	NSSize
+	Origin NSPoint
+	Size   NSSize
 }
 
 type NSSize struct {
-	Width	float64
-	Height	float64
+	Width  float64
+	Height float64
 }
 
-type NSPoint struct{
-	X	float64
-	Y	float64
+type NSPoint struct {
+	X float64
+	Y float64
 }
 
 func ToNSRect(cgrect C.CGRect) *NSRect {
@@ -31,30 +30,32 @@ func ToNSRect(cgrect C.CGRect) *NSRect {
 
 func (nsr *NSRect) Bytes() []byte {
 	var result []byte
-	
+
 	return result
 }
 
 func (nsr *NSRect) CGRect() C.CGRect {
 	var result C.CGRect
-	
+
 	return result
 }
 
-
 type NSUInteger uint64
 
-
-
-// XXX somewhat incomplete 
+// XXX incomplete 
 func objcArgTypeString(argType string) string {
-	
+
 	switch argType {
-		case "_Ctype_id":		return "@"
-		case "_Ctype_SEL":		return ":"
-		case "_Ctype_CGRect":	return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}"
-		case "_Ctype_BOOL":		return "B" 
-		default: 				return "@"
+	case "_Ctype_id":
+		return "@"
+	case "_Ctype_SEL":
+		return ":"
+	case "_Ctype_CGRect":
+		return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}"
+	case "_Ctype_BOOL":
+		return "B"
+	default:
+		return "@"
 	}
 	return ""
 }
@@ -92,4 +93,3 @@ func objcArgTypeString(argType string) string {
 #define _C_CONST    'r'
 
 */
-
