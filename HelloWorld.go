@@ -39,11 +39,9 @@ func main() {
 	bundle = bundle.Call("initWithPath:", path)
 	bundle.Call("loadNibFile:externalNameTable:withZone:", gocoa.NSString("HelloWorld"), dict, app.Call("zone"))
 	
-	
 	icon := gocoa.ClassForName("NSImage").Instance("alloc")
 	icon = icon.Call("initByReferencingFile:", gocoa.NSString("go.icns"))
 	app.Call("setApplicationIconImage:", icon)
-	
 	
 	app.Call("run")
 }

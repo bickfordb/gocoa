@@ -55,7 +55,7 @@ scope
 
 With gocoa, I'm working toward a solution that allows me to write less code, without generating runtime dependencies on additional libraries and tools. I'm also interested in things like the iPhone and GNUStep and Étoilé, so while I've seen other work in this area, I'm solving for the general case.
 
-I looked at several Objective-C bridges before choosing a strategy, and my thinking was most influenced by Cocoa# from the mono project. Although C# supports all sorts of constructs irrelevant to Go, and although Cocoa# unnecessarily reimplements features everywhere with an extensive peer infrastructure, the convention is to build out from the C interface to the Objective-C runtime.
+I looked at several Objective-C bridges before choosing a strategy, and my thinking was most influenced by Cocoa# from the mono project. Although C# has all sorts of constructs irrelevant to Go, the convention is to simply build out from the C interface. That's a heck of a lot less to debug.
 
 In studying other projects, I noticed that in each of them a lot of unnecessary peer code was written, and that looks like a maintenance headache that will eventually lead to bit rot. If you must have peers, use a tool to generate lightweight ones using introspection at runtime in your target language. Don't write them, you're probably just wasting time handcrafting bugs.
 

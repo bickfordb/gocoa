@@ -57,7 +57,7 @@ import (
 	"strings"
 )
 
-/* class implementation *************************************************************** */
+/* class implementation ********************************************************************/
 
 type Class struct{
 	Pointer uintptr
@@ -139,7 +139,7 @@ func (cls *Class) ListMethods() {
 	}
 }
 
-/* object implementation *************************************************************** */
+/* object implementation ********************************************************************/
 
 type Object struct {
 	Pointer uintptr
@@ -318,7 +318,50 @@ func (ivr *Ivar) Name() string {
 }
 
 
-/* utility methods ******************************************************************* */
+/* property methods ********************************************************************/
+
+type Property struct{
+	Value 	C.objc_property_t
+}
+
+func (prop *Property) Name() string {
+	return C.GoString(C.property_getName(prop.Value))
+}
+
+func (prop *Property) Attributes() string {
+	return C.GoString(C.property_getAttributes(prop.Value))
+}
+
+func (cls *Class) Property(name string) *Property {
+	var result C.objc_property_t
+	result = C.class_getProperty(cls.classPointer(), C.CString(name))
+	if result == nil {
+		return nil
+	}
+	return &Property{ Value:result }
+}
+
+func (cls *Class) ListProperties() {
+	
+	fmt.Println(cls.Name(), ": properties")
+
+	var outCount C.uint
+	var properties []C.objc_property_t
+
+	p := (C.class_copyPropertyList(cls.classPointer(), &outCount))
+		
+	if p != nil {
+		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
+		for i := 0; i < int(outCount); i++ {
+			tmp := Property{ properties[i] }
+			fmt.Println("\t", tmp.Name(), "(", tmp.Attributes(), ")")
+		}
+		C.free(unsafe.Pointer(p))
+	}
+}
+
+
+/* utility methods ********************************************************************/
 
 
 func ClassForName(name string) *Class {
