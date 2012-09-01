@@ -12,10 +12,10 @@ The code is still rapidly evolving, and as a result does not represent a stable 
 examples
 --------
 
-* HelloWorld.go demonstrates messaging and events between code written in Go and UI elements defined in Interface Builder.
+* HelloWorld.go demonstrates messaging and events between Go code and Interface Builder controls.
 * SimpleView.go (broken) displays a subclass NSView defined in Interface Builder and responds to drawRect: requests from NSApplication.
-* Application.go (incomplete) displays and adds data to a NSTableView defined in Interface Builder.
-* Nibless.go is an example of an application that defines its UI in code rather than using Interface Builder.
+* TableView.go (incomplete) displays and adds data to a NSTableView defined in Interface Builder.
+* Nibless.go (incomplete) defines its UI in code rather than using Interface Builder.
 
 ...and what I really should be working on is getting an example using WebKit working. That's where Go's rubber meets the road.
 
