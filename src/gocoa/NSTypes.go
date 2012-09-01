@@ -5,6 +5,11 @@ package gocoa
 */
 import "C"
 
+
+func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
+	return NSRect{ Origin: NSPoint{ X, Y }, Size: NSSize{ Width, Height } }
+}
+
 type NSRect struct {
 	Origin	NSPoint
 	Size	NSSize
