@@ -7,7 +7,7 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-//	"strings"
+	//	"strings"
 	"strconv"
 	"unsafe"
 )
@@ -16,27 +16,25 @@ import (
 might be able to get away with omitting the Id() method by returning ids as byte arrays too
 */
 type Passable interface {
-	Id() 			C.id
-	Bytes() 		[]byte
-	TypeString() 	string
+	Id() C.id
+	Bytes() []byte
+	TypeString() string
 }
 
 func TypeString() string {
-	
+
 	return "2"
 }
 
 /* Object is not an NSObject, it's an ObjC object **********************************/
 
-func (obj Object) Id() C.id { return obj.idPointer() }
-func (obj Object) Bytes() []byte { return make([]byte,0) }
+func (obj Object) Id() C.id           { return obj.idPointer() }
+func (obj Object) Bytes() []byte      { return make([]byte, 0) }
 func (obj Object) TypeString() string { return "@" }
-
 
 /* Selector ************************************************************************/
 
 type Selector uintptr
-
 
 /* NSSize **************************************************************************/
 
@@ -60,7 +58,6 @@ func (nss NSSize) Bytes() []byte {
 }
 func (nss NSSize) TypeString() string { return "{_NSSize=ff}" }
 
-
 /* NSPoint *************************************************************************/
 
 // define
@@ -82,7 +79,6 @@ func (nsp NSPoint) Bytes() []byte {
 	return buf.Bytes()
 }
 func (nsp NSPoint) TypeString() string { return "{_NSPoint=ff}" }
-
 
 /* NSRect **************************************************************************/
 
@@ -125,10 +121,10 @@ func (nsr NSRect) CGRect() C.CGRect {
 // pretty print
 func (nsr NSRect) String() string {
 	result := "["
-	result = result + strconv.FormatFloat(nsr.Origin.X, 'f',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Origin.Y, 'f',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Width, 'f',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Height, 'f',  -1, 64) + "]"
+	result = result + strconv.FormatFloat(nsr.Origin.X, 'f', -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Origin.Y, 'f', -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Width, 'f', -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Height, 'f', -1, 64) + "]"
 	return result
 }
 
@@ -152,7 +148,9 @@ type NSBoolean byte
 // create
 func NSMakeBoolean(value bool) NSBoolean {
 	var result NSBoolean
-	if value { result = 1}
+	if value {
+		result = 1
+	}
 	return result
 }
 
@@ -164,7 +162,6 @@ func (nsb NSBoolean) Bytes() []byte {
 	return result
 }
 func (nsb NSBoolean) TypeString() string { return "B" }
-
 
 /* type strings ************************************************************************/
 

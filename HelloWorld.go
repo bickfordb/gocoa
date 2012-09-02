@@ -31,11 +31,11 @@ func main() {
 
 	bundle = bundle.Call("initWithPath:", path)
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("HelloWorld"), dict, app.Call("zone"))
-	
+
 	icon := ClassForName("NSImage").Instance("alloc")
 	icon = icon.Call("initByReferencingFile:", NSString("go.icns"))
 	app.Call("setApplicationIconImage:", icon)
-	
+
 	app.Call("run")
 }
 

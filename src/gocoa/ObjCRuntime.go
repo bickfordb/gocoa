@@ -20,7 +20,7 @@ static inline id gocoa_I(id self, SEL op, void* items[], char** types, int argsC
 		printf(", type:'%s'", types[i]);
 	}
 	printf(")\n");
-	
+
 	switch (argsCount) {
 		case 1: return objc_msgSend(self, op, *fpId(items[0]));
 //		case 2: return objc_msgSend(self, op, items[0], items[1]);
@@ -29,7 +29,7 @@ static inline id gocoa_I(id self, SEL op, void* items[], char** types, int argsC
 //		case 5: return objc_msgSend(self, op, items[0], items[1], items[2], items[3], items[4]);
 		default: return objc_msgSend(self, op);
 	}
-	
+
 }
 
 
@@ -72,11 +72,11 @@ import "C"
 
 import (
 	"fmt"
-	"unsafe"
 	"math"
 	"reflect"
 	"runtime"
 	"strings"
+	"unsafe"
 )
 
 /* class implementation ********************************************************************/
@@ -180,7 +180,6 @@ func (cls Class) ListProperties() {
 	}
 }
 
-
 /* object implementation ********************************************************************/
 
 type Object uintptr
@@ -214,7 +213,6 @@ func (obj Object) InstanceVariable(name string) Object {
 func (obj Object) SetInstanceVariable(name string, val Object) {
 	C.object_setInstanceVariable(obj.idPointer(), C.CString(name), unsafe.Pointer(val))
 }
-
 
 /* class creation methods ------------------------------------------------------------- */
 
@@ -297,7 +295,7 @@ func (mthd Method) Name() string {
 * object.InstanceVariable(name)
  */
 
-type Ivar uintptr 
+type Ivar uintptr
 
 func (ivr Ivar) Name() string {
 	return C.GoString(C.ivar_getName((C.Ivar)(unsafe.Pointer(ivr))))
@@ -314,7 +312,6 @@ func (prop Property) Name() string {
 func (prop Property) Attributes() string {
 	return C.GoString(C.property_getAttributes((C.objc_property_t)(unsafe.Pointer(prop))))
 }
-
 
 /* utility methods ********************************************************************/
 
@@ -344,36 +341,34 @@ func ObjectForId(object_id uintptr) Object {
 * As of yet, it's a mess that seems to work.
  */
 
- func (obj Object) I(selector string, args...Passable) Passable {
-	
+func (obj Object) I(selector string, args ...Passable) Passable {
+
 	items := make([]unsafe.Pointer, len(args))
 	types := make([]*C.char, len(args))
-	
-	for i:=0; i<len(args); i++ {
-	
+
+	for i := 0; i < len(args); i++ {
+
 		value := reflect.ValueOf(args[i])
-	
+
 		types[i] = C.CString(args[i].TypeString())
-		
-		fmt.Println("value.String()", value.String())	// 
-		
+
+		fmt.Println("value.String()", value.String()) // 
+
 		if value.String() == "<gocoa.Object Value>" {
 			items[i] = unsafe.Pointer(args[i].Id())
 		} else {
 			items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
 		}
 	}
-	
+
 	sel := C.sel_registerName(C.CString(selector))
 	var result C.id
-	
-	
+
 	result = C.gocoa_I(obj.idPointer(), sel, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
-	
+
 	// XXX output conversion needed
 	return (Object)(unsafe.Pointer(result))
 }
-
 
 // clumsy hacks abound
 
@@ -393,7 +388,6 @@ func (obj Object) CallI(method string, arg NSUInteger) Object {
 	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.idPointer(), sel, (C.long)(arg))))
 }
 
-
 /*
 * Call()
 * Notice that you have to pass a pointer to the first array element to match the c array calling convention.
@@ -405,7 +399,6 @@ func (obj Object) Call(method string, args ...Object) Object {
 	}
 	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))
 }
-
 
 /*
 * CallSuper()
@@ -431,7 +424,6 @@ func (obj Object) CallSuperR(method string, arg NSRect) Object {
 	sel := C.sel_registerName(C.CString(method))
 	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, arg.CGRect())))
 }
-
 
 /*
 * loadThySelf()
