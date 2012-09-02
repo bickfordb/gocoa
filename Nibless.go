@@ -22,7 +22,7 @@ func main() {
 	appName := ClassForName("NSProcessInfo").Instance("processInfo").Call("processName")
 	quitTitle := NSString("Quit ").Call("stringByAppendingString:", appName)
 	quitMenuItem := ClassForName("NSMenuItem").Instance("alloc")
-	//	third argument wants: app.Selector("terminate:")
+	//	third argument wants: SelectorForName("terminate:")
 	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, (Object)(0), NSString("q"))
 	appMenu.Call("addItem:", quitMenuItem)
 	appMenuItem.Call("setSubmenu:", appMenu)

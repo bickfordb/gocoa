@@ -268,6 +268,22 @@ func (cls Class) Register() {
 
 /* method implementation ************************************************************** */
 
+type Selector uintptr
+
+func SelectorForName(name string) Selector {
+	return (Selector)(unsafe.Pointer(C.sel_registerName(C.CString(name))))
+}
+
+func (sel Selector) selPointer() C.SEL {
+	return (C.SEL)(unsafe.Pointer(sel))
+}
+
+func (sel Selector) Name() string {
+	return C.GoString(C.sel_getName(sel.selPointer()))
+}
+
+/* method implementation ************************************************************** */
+
 type Method uintptr
 
 func (mthd Method) methodPointer() C.Method {

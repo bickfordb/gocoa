@@ -9,15 +9,11 @@ func NSDictionary(key string, value Object) Object {
 	return ClassForName("NSDictionary").Instance("alloc").Call("initWithObject:forKey:", value, NSString(key))
 }
 
-// this is fairly bad, meh, just call it an object for now...
-func NSString(toNSString string) Object {
-	cStringPtr := (Object)(unsafe.Pointer(C.CString(toNSString)))
+func NSString(inString string) Object {
+	cStringPtr := (Object)(unsafe.Pointer(C.CString(inString)))	// XXX not an object, but need to pass it
 	return ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr)
 }
 
-func GoString(nsString Object) string {
-	return C.GoString((*C.char)(unsafe.Pointer(nsString.Call("UTF8String"))))
-}
 
 const (
 	BlackColor     = "blackColor"
@@ -40,3 +36,18 @@ const (
 func NSColor(color string) Object {
 	return ClassForName("NSColor").Instance(color)
 }
+
+
+const (
+	NSBorderlessWindowMask		NSUInteger = 0
+    NSTitledWindowMask			NSUInteger = 1 << 0
+    NSClosableWindowMask		NSUInteger = 1 << 1
+    NSMiniaturizableWindowMask	NSUInteger = 1 << 2
+    NSResizableWindowMask		NSUInteger = 1 << 3
+)
+
+const (
+    NSBackingStoreRetained	 	NSUInteger = 0
+    NSBackingStoreNonretained	NSUInteger = 1
+    NSBackingStoreBuffered		NSUInteger = 2
+)

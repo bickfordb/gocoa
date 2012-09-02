@@ -7,7 +7,6 @@ import "C"
 import (
 	"bytes"
 	"encoding/binary"
-	//	"strings"
 	"strconv"
 	"unsafe"
 )
@@ -21,12 +20,8 @@ type Passable interface {
 	TypeString() string
 }
 
-func TypeString() string {
 
-	return "2"
-}
-
-/* Object is not an NSObject, it's an ObjC object **********************************/
+/* Object **************************************************************************/
 
 func (obj Object) Id() C.id           { return obj.idPointer() }
 func (obj Object) Bytes() []byte      { return make([]byte, 0) }
@@ -34,7 +29,9 @@ func (obj Object) TypeString() string { return "@" }
 
 /* Selector ************************************************************************/
 
-type Selector uintptr
+func (sel Selector) Id() C.id           { return (C.id)(unsafe.Pointer(sel.selPointer())) }
+func (sel Selector) Bytes() []byte      { return make([]byte, 0) }
+func (sel Selector) TypeString() string { return ":" }
 
 /* NSSize **************************************************************************/
 
@@ -89,7 +86,7 @@ type NSRect struct {
 }
 
 // create
-func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
+func MakeNSRect(X float64, Y float64, Width float64, Height float64) NSRect {
 	return NSRect{Origin: NSPoint{X, Y}, Size: NSSize{Width, Height}}
 }
 
@@ -146,7 +143,7 @@ func (ui NSUInteger) TypeString() string { return "I" }
 type NSBoolean byte
 
 // create
-func NSMakeBoolean(value bool) NSBoolean {
+func MakeNSBoolean(value bool) NSBoolean {
 	var result NSBoolean
 	if value {
 		result = 1
