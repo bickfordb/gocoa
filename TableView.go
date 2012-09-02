@@ -42,7 +42,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
-	windowsCount := (NSUInteger)(windowsArray.Call("count").Pointer)
+	windowsCount := (NSUInteger)(windowsArray.Call("count"))
 	var ix NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
 		window := windowsArray.CallI("objectAtIndex:", ix)

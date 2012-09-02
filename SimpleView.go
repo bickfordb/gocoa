@@ -36,7 +36,8 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	simpleView := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
-	return (C.id)(unsafe.Pointer(simpleView.Pointer))
+	
+	return (C.id)(unsafe.Pointer(simpleView))
 }
 
 
@@ -123,8 +124,15 @@ func main() {
 	bundle = bundle.Call("initWithPath:", path)
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
 	
-	rect := NSMakeRect(0,0,0,0)
-	bundle.I("initWithPath:", path, &rect)
+	
+	// testing message passing
+	
+//	windowsArray := app.Call("windows")
+//	windowsCount := (NSUInteger)(windowsArray.Call("count"))
+	
+//	bundle.I("initWithPath:", path, NSMakeRect(0,0,0,0), windowsCount, NSMakeBoolean(true))
+	
+	
 	
 	app.Call("run")
 

@@ -5,17 +5,18 @@ import (
 	"unsafe"
 )
 
-func NSDictionary(key string, value *Object) *Object {
+func NSDictionary(key string, value Object) Object {
 	return ClassForName("NSDictionary").Instance("alloc").Call("initWithObject:forKey:", value, NSString(key))
 }
 
-func NSString(toNSString string) *Object {
-	cStringPtr := (uintptr)(unsafe.Pointer(C.CString(toNSString)))
+// this is fairly bad, meh, just call it an object for now...
+func NSString(toNSString string) Object {
+	cStringPtr := (Object)(unsafe.Pointer(C.CString(toNSString)))
 	return ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr)
 }
 
-func GoString(nsString *Object) string {
-	return C.GoString((*C.char)(unsafe.Pointer(nsString.Call("UTF8String").Pointer)))
+func GoString(nsString Object) string {
+	return C.GoString((*C.char)(unsafe.Pointer(nsString.Call("UTF8String"))))
 }
 
 const (
@@ -36,6 +37,6 @@ const (
 	YellowColor    = "yellowColor"
 )
 
-func NSColor(color string) *Object {
+func NSColor(color string) Object {
 	return ClassForName("NSColor").Instance(color)
 }

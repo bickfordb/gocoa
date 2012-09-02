@@ -12,35 +12,77 @@ import (
 	"unsafe"
 )
 
-
+/*
+might be able to get away with omitting the Id() method by returning ids as byte arrays too
+*/
 type Passable interface {
- 	IsObject() 		bool
 	Id() 			C.id
 	Bytes() 		[]byte
 	TypeString() 	string
 }
 
+func TypeString() string {
+	
+	return "2"
+}
 
 /* Object is not an NSObject, it's an ObjC object **********************************/
 
-func (obj *Object) Id() C.id { return obj.idPointer() }
-func (obj *Object) IsObject() bool { return true }
-func (obj *Object) Bytes() []byte { return make([]byte,0) }
-func (obj *Object) TypeString() string { return "@" }
+func (obj Object) Id() C.id { return obj.idPointer() }
+func (obj Object) Bytes() []byte { return make([]byte,0) }
+func (obj Object) TypeString() string { return "@" }
+
+
+/* Selector ************************************************************************/
+
+type Selector uintptr
+
 
 /* NSSize **************************************************************************/
 
+// define
 type NSSize struct {
 	Width  float64
 	Height float64
 }
 
+// create
+func MakeNSSize(Width float64, Height float64) NSSize {
+	return NSSize{Width, Height}
+}
+
+// implement Passable
+func (nss NSSize) Id() C.id { return (C.id)(unsafe.Pointer(&(nss.Bytes()[0]))) }
+func (nss NSSize) Bytes() []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, &nss)
+	return buf.Bytes()
+}
+func (nss NSSize) TypeString() string { return "{_NSSize=ff}" }
+
+
 /* NSPoint *************************************************************************/
 
+// define
 type NSPoint struct {
 	X float64
 	Y float64
 }
+
+// create
+func MakeNSPoint(X float64, Y float64) NSPoint {
+	return NSPoint{X, Y}
+}
+
+// implement Passable
+func (nsp NSPoint) Id() C.id { return (C.id)(unsafe.Pointer(&(nsp.Bytes()[0]))) }
+func (nsp NSPoint) Bytes() []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, &nsp)
+	return buf.Bytes()
+}
+func (nsp NSPoint) TypeString() string { return "{_NSPoint=ff}" }
+
 
 /* NSRect **************************************************************************/
 
@@ -56,14 +98,13 @@ func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
 }
 
 // implement Passable
-func (nsr *NSRect) Id() C.id { return (C.id)(unsafe.Pointer(&(nsr.Bytes()[0]))) }
-func (nsr *NSRect) IsObject() bool { return false }
-func (nsr *NSRect) Bytes() []byte {
+func (nsr NSRect) Id() C.id { return (C.id)(unsafe.Pointer(&(nsr.Bytes()[0]))) }
+func (nsr NSRect) Bytes() []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, nsr)
+	binary.Write(buf, binary.LittleEndian, &nsr)
 	return buf.Bytes()
 }
-func (nsr *NSRect) TypeString() string { return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}" }
+func (nsr NSRect) TypeString() string { return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}" }
 
 // convert to/from CGRect
 func TypeNSRect(cgrect interface{}) NSRect {
@@ -74,7 +115,7 @@ func TypeNSRect(cgrect interface{}) NSRect {
 	return result
 }
 
-func (nsr *NSRect) CGRect() C.CGRect {
+func (nsr NSRect) CGRect() C.CGRect {
 	var result C.CGRect
 	buf := bytes.NewBuffer(nsr.Bytes())
 	binary.Read(buf, binary.LittleEndian, result)
@@ -82,12 +123,12 @@ func (nsr *NSRect) CGRect() C.CGRect {
 }
 
 // pretty print
-func (nsr *NSRect) String() string {
+func (nsr NSRect) String() string {
 	result := "["
-	result = result + strconv.FormatFloat(nsr.Origin.X, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Origin.Y, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Width, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Height, 'e',  -1, 64) + "]"
+	result = result + strconv.FormatFloat(nsr.Origin.X, 'f',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Origin.Y, 'f',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Width, 'f',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Height, 'f',  -1, 64) + "]"
 	return result
 }
 
@@ -95,9 +136,39 @@ func (nsr *NSRect) String() string {
 
 type NSUInteger uint64
 
+// implement Passable
+func (ui NSUInteger) Id() C.id { return (C.id)(unsafe.Pointer(&ui)) }
+func (ui NSUInteger) Bytes() []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, ui)
+	return buf.Bytes()
+}
+func (ui NSUInteger) TypeString() string { return "I" }
+
+/* NSBoolean **************************************************************************/
+
+type NSBoolean byte
+
+// create
+func NSMakeBoolean(value bool) NSBoolean {
+	var result NSBoolean
+	if value { result = 1}
+	return result
+}
+
+// implement Passable
+func (nsb NSBoolean) Id() C.id { return (C.id)(unsafe.Pointer(&nsb)) }
+func (nsb NSBoolean) Bytes() []byte {
+	result := make([]byte, 1)
+	result[0] = (byte)(nsb)
+	return result
+}
+func (nsb NSBoolean) TypeString() string { return "B" }
+
 
 /* type strings ************************************************************************/
 
+// XXX this really isn't quite the same as type safety...
 func objcArgTypeString(argType string) string {
 
 	switch argType {

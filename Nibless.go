@@ -23,7 +23,7 @@ func main() {
 	quitTitle := NSString("Quit ").Call("stringByAppendingString:", appName)
 	quitMenuItem := ClassForName("NSMenuItem").Instance("alloc")
 //	third argument wants: app.Selector("terminate:")
-	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, &Object{0}, NSString("q"))
+	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, (Object)(0), NSString("q"))
 	appMenu.Call("addItem:", quitMenuItem)
 	appMenuItem.Call("setSubmenu:", appMenu)
 	window := ClassForName("NSWindow").Instance("alloc")
@@ -33,7 +33,7 @@ func main() {
 //		NSTitledWindowMask, NSBackingStoreBuffered, NSBoolean(false)).Call("autorelease")
 //	wants: window.Call("cascadeTopLeftFromPoint:", NSPoint{20,20})
 	window.Call("setTitle:", appName)
-	window.Call("makeKeyAndOrderFront:", &Object{0})
+	window.Call("makeKeyAndOrderFront:", (Object)(0))
 //	wants: app.Call("activateIgnoringOtherApps:", NSBoolean(true))
 	app.Call("run")
 

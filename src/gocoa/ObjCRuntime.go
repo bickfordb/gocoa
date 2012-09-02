@@ -9,15 +9,30 @@ package gocoa
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 
-static inline void* gocoa_I(id self, SEL op, void* items, char** types, int argsCount) {
+CGRect*	fpCGRect(void* in) { return (CGRect*)in; }
+id*		fpId	(void* in) { return (id*)in; }
+
+
+static inline id gocoa_I(id self, SEL op, void* items[], char** types, int argsCount) {
 	printf("gocoa_I(%d, %d)", -1, argsCount);
 	int i=0;
-	for(i=0; i<argsCount; i++) {
+	for(; i<argsCount; i++) {
 		printf(", type:'%s'", types[i]);
 	}
 	printf(")\n");
-	return NULL;
+	
+	switch (argsCount) {
+		case 1: return objc_msgSend(self, op, *fpId(items[0]));
+//		case 2: return objc_msgSend(self, op, items[0], items[1]);
+//		case 3: return objc_msgSend(self, op, items[0], items[1], items[2]);
+//		case 4: return objc_msgSend(self, op, items[0], items[1], items[2], items[3]);
+//		case 5: return objc_msgSend(self, op, items[0], items[1], items[2], items[3], items[4]);
+		default: return objc_msgSend(self, op);
+	}
+	
 }
+
+
 
 static inline id gocoa_objc_msgSendI(id self, SEL op, long message) {
 	return objc_msgSend(self, op, message);
@@ -66,45 +81,49 @@ import (
 
 /* class implementation ********************************************************************/
 
-type Class struct {
-	Pointer uintptr
+type Class uintptr
+
+func (cls Class) classPointer() C.Class {
+	return (C.Class)(unsafe.Pointer(cls))
 }
 
-func (cls *Class) classPointer() C.Class {
-	return (C.Class)(unsafe.Pointer(cls.Pointer))
+func (cls Class) idPointer() C.id {
+	return (C.id)(unsafe.Pointer(cls))
 }
 
-func (cls *Class) idPointer() C.id {
-	return (C.id)(unsafe.Pointer(cls.Pointer))
-}
-
-func (cls *Class) respondsTo(selector string) bool {
+func (cls Class) respondsTo(selector string) bool {
 	sel := C.sel_registerName(C.CString(selector))
 	return (C.class_respondsToSelector(cls.classPointer(), sel) == 1)
 }
 
-func (cls *Class) Name() string {
+func (cls Class) Name() string {
 	return C.GoString(C.class_getName(cls.classPointer()))
 }
 
-func (cls *Class) Super() *Class {
-	return &Class{(uintptr)(unsafe.Pointer(C.class_getSuperclass(cls.classPointer())))}
+func (cls Class) Super() Class {
+	return (Class)(unsafe.Pointer(C.class_getSuperclass(cls.classPointer())))
 }
 
-func (cls *Class) Instance(calling string, args ...uintptr) *Object {
-	return &Object{msgSend(&Object{cls.Pointer}, calling, args...)}
+func (cls Class) Instance(method string, args ...Object) Object {
+	obj := (Object)(cls)
+	return obj.Call(method, args...)
 }
 
-func (cls *Class) InstanceR(calling string, arg NSRect) *Object {
-	return &Object{msgSendR(&Object{cls.Pointer}, calling, arg)}
+func (cls Class) InstanceR(method string, arg NSRect) Object {
+	obj := (Object)(cls)
+	return obj.CallR(method, arg)
 }
 
-func (cls *Class) Method(name string) *Method {
+func (cls Class) Method(name string) Method {
 	sel := C.sel_registerName(C.CString(name))
-	return &Method{(uintptr)(unsafe.Pointer(C.class_getClassMethod(cls.classPointer(), sel)))}
+	return (Method)(unsafe.Pointer(C.class_getClassMethod(cls.classPointer(), sel)))
 }
 
-func (cls *Class) ListInstanceVariables() {
+func (cls Class) Property(name string) Property {
+	return (Property)(unsafe.Pointer(C.class_getProperty(cls.classPointer(), C.CString(name))))
+}
+
+func (cls Class) ListInstanceVariables() {
 
 	fmt.Println(cls.Name(), ": ivars")
 
@@ -116,14 +135,14 @@ func (cls *Class) ListInstanceVariables() {
 	if p != nil {
 		ivarPointers = (*[1 << 30]C.Ivar)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := Ivar{(uintptr)(unsafe.Pointer(ivarPointers[i]))}
+			tmp := (Ivar)(unsafe.Pointer(ivarPointers[i]))
 			fmt.Println("\t", tmp.Name())
 		}
 		C.free(unsafe.Pointer(p))
 	}
 }
 
-func (cls *Class) ListMethods() {
+func (cls Class) ListMethods() {
 
 	fmt.Println(cls.Name(), ": methods")
 
@@ -135,67 +154,76 @@ func (cls *Class) ListMethods() {
 	if p != nil {
 		methodPointers = (*[1 << 30]C.Method)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := Method{(uintptr)(unsafe.Pointer(methodPointers[i]))}
+			tmp := (Method)(unsafe.Pointer(methodPointers[i]))
 			fmt.Println("\t", tmp.Name())
 		}
 		C.free(unsafe.Pointer(p))
 	}
 }
 
+func (cls Class) ListProperties() {
+
+	fmt.Println(cls.Name(), ": properties")
+
+	var outCount C.uint
+	var properties []C.objc_property_t
+
+	p := (C.class_copyPropertyList(cls.classPointer(), &outCount))
+
+	if p != nil {
+		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
+		for i := 0; i < int(outCount); i++ {
+			tmp := (Property)(unsafe.Pointer(properties[i]))
+			fmt.Println("\t", tmp.Name(), "(", tmp.Attributes(), ")")
+		}
+		C.free(unsafe.Pointer(p))
+	}
+}
+
+
 /* object implementation ********************************************************************/
 
-type Object struct {
-	Pointer uintptr
-}
+type Object uintptr
 
 // XXX name collision in C.types, can't use C.Object
-func (obj *Object) idPointer() C.id {
-	return (C.id)(unsafe.Pointer(obj.Pointer))
+func (obj Object) idPointer() C.id {
+	return (C.id)(unsafe.Pointer(obj))
 }
 
-func (obj *Object) getMethod(name string) *Method {
+func (obj Object) getMethod(name string) Method {
 	sel := C.sel_registerName(C.CString(name))
-	method_id := (uintptr)(unsafe.Pointer(C.class_getInstanceMethod(obj.Class().classPointer(), sel)))
-	return &Method{method_id}
+	return (Method)(unsafe.Pointer(C.class_getInstanceMethod(obj.Class().classPointer(), sel)))
 }
 
-func (obj *Object) Class() *Class {
-	object_id := (uintptr)(unsafe.Pointer(C.object_getClass(obj.idPointer())))
-	return &Class{object_id}
+func (obj Object) Class() Class {
+	return (Class)(unsafe.Pointer(C.object_getClass(obj.idPointer())))
 }
 
 // XXX this does not necessarily return an object pointer
-func (obj *Object) InstanceVariable(name string) *Object {
+func (obj Object) InstanceVariable(name string) Object {
 	var val uintptr
 	ivar := C.object_getInstanceVariable(obj.idPointer(), C.CString(name), (*unsafe.Pointer)(unsafe.Pointer(&val)))
 	typeenc := C.GoString(C.ivar_getTypeEncoding(ivar))
 
 	if typeenc == "@" {
-		return &Object{val}
+		return (Object)(val)
 	}
-	return nil
+	return 0
 }
 
-func (obj *Object) SetInstanceVariable(name string, val *Object) {
-	C.object_setInstanceVariable(obj.idPointer(), C.CString(name), unsafe.Pointer(val.Pointer))
+func (obj Object) SetInstanceVariable(name string, val Object) {
+	C.object_setInstanceVariable(obj.idPointer(), C.CString(name), unsafe.Pointer(val))
 }
 
-func (obj *Object) ListInstanceVariables() {
-	obj.Class().ListInstanceVariables()
-}
-
-func (obj *Object) ListMethods() {
-	obj.Class().ListMethods()
-}
 
 /* class creation methods ------------------------------------------------------------- */
 
-func (cls *Class) Subclass(subclassName string) *Class {
-	class_id := C.objc_allocateClassPair((C.Class)(unsafe.Pointer(cls.Pointer)), C.CString(subclassName), (C.size_t)(0))
-	return &Class{(uintptr)(unsafe.Pointer(class_id))}
+func (cls Class) Subclass(subclassName string) Class {
+	class_id := C.objc_allocateClassPair(cls.classPointer(), C.CString(subclassName), (C.size_t)(0))
+	return (Class)(unsafe.Pointer(class_id))
 }
 
-func (cls *Class) AddMethod(methodName string, implementor interface{}) bool {
+func (cls Class) AddMethod(methodName string, implementor interface{}) bool {
 
 	v := reflect.ValueOf(implementor)
 
@@ -226,42 +254,40 @@ func (cls *Class) AddMethod(methodName string, implementor interface{}) bool {
 	return false
 }
 
-func (cls *Class) AddIvar(ivarName string, ivarClass *Class) bool {
+func (cls Class) AddIvar(ivarName string, ivarClass Class) bool {
 
 	types := objcArgTypeString(ivarClass.Name())
-	size := (C.size_t)(unsafe.Sizeof(cls.Pointer))
-	alignment := (C.uint8_t)(math.Log2((float64)(unsafe.Sizeof(cls.Pointer))))
+	size := (C.size_t)(unsafe.Sizeof(cls))
+	alignment := (C.uint8_t)(math.Log2((float64)(unsafe.Sizeof(cls))))
 	result := C.class_addIvar(cls.classPointer(), C.CString(ivarName), size, alignment, C.CString(types))
 
 	return (result == 1)
 }
 
-func (cls *Class) Register() {
+func (cls Class) Register() {
 	C.objc_registerClassPair(cls.classPointer())
 }
 
 /* method implementation ************************************************************** */
 
-type Method struct {
-	Pointer uintptr
+type Method uintptr
+
+func (mthd Method) methodPointer() C.Method {
+	return (C.Method)(unsafe.Pointer(mthd))
 }
 
-func (mthd *Method) methodPointer() C.Method {
-	return (C.Method)(unsafe.Pointer(mthd.Pointer))
-}
-
-func (mthd *Method) ArgumentCount() int {
+func (mthd Method) ArgumentCount() int {
 	return (int)(C.method_getNumberOfArguments(mthd.methodPointer()))
 }
 
-func (mthd *Method) ArgumentType(index int) string {
+func (mthd Method) ArgumentType(index int) string {
 	var dst_len C.size_t
 	var dst *C.char
 	C.method_getArgumentType(mthd.methodPointer(), (C.uint)(index), dst, dst_len)
 	return C.GoString(dst)
 }
 
-func (mthd *Method) Name() string {
+func (mthd Method) Name() string {
 	return C.GoString(C.sel_getName(C.method_getName(mthd.methodPointer())))
 }
 
@@ -271,63 +297,33 @@ func (mthd *Method) Name() string {
 * object.InstanceVariable(name)
  */
 
-type Ivar struct{ id uintptr }
+type Ivar uintptr 
 
-func (ivr *Ivar) Name() string {
-	return C.GoString(C.ivar_getName((C.Ivar)(unsafe.Pointer(ivr.id))))
+func (ivr Ivar) Name() string {
+	return C.GoString(C.ivar_getName((C.Ivar)(unsafe.Pointer(ivr))))
 }
 
 /* property methods ********************************************************************/
 
-type Property struct {
-	Value C.objc_property_t
+type Property uintptr
+
+func (prop Property) Name() string {
+	return C.GoString(C.property_getName((C.objc_property_t)(unsafe.Pointer(prop))))
 }
 
-func (prop *Property) Name() string {
-	return C.GoString(C.property_getName(prop.Value))
+func (prop Property) Attributes() string {
+	return C.GoString(C.property_getAttributes((C.objc_property_t)(unsafe.Pointer(prop))))
 }
 
-func (prop *Property) Attributes() string {
-	return C.GoString(C.property_getAttributes(prop.Value))
-}
-
-func (cls *Class) Property(name string) *Property {
-	var result C.objc_property_t
-	result = C.class_getProperty(cls.classPointer(), C.CString(name))
-	if result == nil {
-		return nil
-	}
-	return &Property{Value: result}
-}
-
-func (cls *Class) ListProperties() {
-
-	fmt.Println(cls.Name(), ": properties")
-
-	var outCount C.uint
-	var properties []C.objc_property_t
-
-	p := (C.class_copyPropertyList(cls.classPointer(), &outCount))
-
-	if p != nil {
-		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
-		for i := 0; i < int(outCount); i++ {
-			tmp := Property{properties[i]}
-			fmt.Println("\t", tmp.Name(), "(", tmp.Attributes(), ")")
-		}
-		C.free(unsafe.Pointer(p))
-	}
-}
 
 /* utility methods ********************************************************************/
 
-func ClassForName(name string) *Class {
-	class_id := (uintptr)(unsafe.Pointer(C.objc_getClass(C.CString(name))))
-	return &Class{class_id}
+func ClassForName(name string) Class {
+	return (Class)(unsafe.Pointer(C.objc_getClass(C.CString(name))))
 }
 
-func ObjectForId(object_id uintptr) *Object {
-	return &Object{object_id}
+func ObjectForId(object_id uintptr) Object {
+	return (Object)(object_id)
 }
 
 /* messaging functions *************************************************************** 
@@ -348,111 +344,92 @@ func ObjectForId(object_id uintptr) *Object {
 * As of yet, it's a mess that seems to work.
  */
 
- func (obj *Object) I(selector string, args...Passable) Passable {
+ func (obj Object) I(selector string, args...Passable) Passable {
 	
 	items := make([]unsafe.Pointer, len(args))
 	types := make([]*C.char, len(args))
 	
 	for i:=0; i<len(args); i++ {
+	
+		value := reflect.ValueOf(args[i])
+	
 		types[i] = C.CString(args[i].TypeString())
-		if args[i].IsObject() {
-			items[i] = unsafe.Pointer(args[i].Id()) // (*C.id)(unsafe.Pointer(&args[0]))
+		
+		fmt.Println("value.String()", value.String())	// 
+		
+		if value.String() == "<gocoa.Object Value>" {
+			items[i] = unsafe.Pointer(args[i].Id())
 		} else {
 			items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
 		}
 	}
 	
 	sel := C.sel_registerName(C.CString(selector))
+	var result C.id
 	
-	result := C.gocoa_I(obj.idPointer(), sel, (unsafe.Pointer)(&items[0]), (**C.char)(&types[0]), (C.int)(len(items)))
+	
+	result = C.gocoa_I(obj.idPointer(), sel, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
 	
 	// XXX output conversion needed
-	return &Object{(uintptr)(unsafe.Pointer(result))}
+	return (Object)(unsafe.Pointer(result))
 }
 
 
 // clumsy hacks abound
-func msgSendI(receiver *Object, selector string, number NSUInteger) uintptr {
-	sel := C.sel_registerName(C.CString(selector))
-	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendI(receiver.idPointer(), sel, (C.long)(number))))
-}
-
-func msgSendR(receiver *Object, selector string, rect NSRect) uintptr {
-	sel := C.sel_registerName(C.CString(selector))
-	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendR(receiver.idPointer(), sel, rect.CGRect())))
-}
 
 type superStruct struct {
-	receiver uintptr
-	class    uintptr
+	receiver Object
+	class    Class
 }
 
-func msgSendSuperR(receiver *Object, selector string, rect NSRect) uintptr {
-	var super superStruct
-	super.receiver = receiver.Pointer
-	super.class = receiver.Class().Super().Pointer
-	sel := C.sel_registerName(C.CString(selector))
-	return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, rect.CGRect())))
+// XXX all of these are pointless, fix
+func (obj Object) CallR(method string, arg NSRect) Object {
+	sel := C.sel_registerName(C.CString(method))
+	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendR(obj.idPointer(), sel, arg.CGRect())))
 }
+
+func (obj Object) CallI(method string, arg NSUInteger) Object {
+	sel := C.sel_registerName(C.CString(method))
+	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.idPointer(), sel, (C.long)(arg))))
+}
+
 
 /*
-* msgSend()
+* Call()
 * Notice that you have to pass a pointer to the first array element to match the c array calling convention.
-* The gocoa_ bridge function essentially, clumsily replicates Apple's deprecated objc_msgSendv().
  */
-func msgSend(receiver *Object, selector string, args ...uintptr) uintptr {
-	sel := C.sel_registerName(C.CString(selector))
+func (obj Object) Call(method string, args ...Object) Object {
+	sel := C.sel_registerName(C.CString(method))
 	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSend(receiver.idPointer(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
+		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.idPointer(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
 	}
-	return (uintptr)(unsafe.Pointer(C.objc_msgSend(receiver.idPointer(), sel)))
+	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))
 }
 
+
 /*
-* msgSendSuper()
+* CallSuper()
 * The distinction here involves messaging to superclasses, with message receipt to the subclass. This
 * requires initing a structure that refers to both the receiver and its superclass. 
  */
-func msgSendSuper(receiver *Object, selector string, args ...uintptr) uintptr {
+func (obj Object) CallSuper(method string, args ...Object) Object {
 	var super superStruct
-	super.receiver = receiver.Pointer
-	super.class = receiver.Class().Super().Pointer
+	super.receiver = obj
+	super.class = obj.Class().Super()
 
-	sel := C.sel_registerName(C.CString(selector))
+	sel := C.sel_registerName(C.CString(method))
 	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (uintptr)(unsafe.Pointer(C.gocoa_objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
+		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
 	}
-	return (uintptr)(unsafe.Pointer(C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)))
+	return (Object)(unsafe.Pointer(C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)))
 }
 
-
-
-func (obj *Object) CallR(method string, arg NSRect) *Object {
-	return &Object{msgSendR(obj, method, arg)}
-}
-
-func (obj *Object) CallI(method string, arg NSUInteger) *Object {
-	return &Object{msgSendI(obj, method, arg)}
-}
-
-func (obj *Object) Call(method string, args ...*Object) *Object {
-	outArgs := make([]uintptr, len(args))
-	for i := 0; i < len(args); i++ {
-		outArgs[i] = args[i].Pointer
-	}
-	return &Object{msgSend(obj, method, outArgs...)}
-}
-
-func (obj *Object) CallSuper(method string, args ...*Object) *Object {
-	outArgs := make([]uintptr, len(args))
-	for i := 0; i < len(args); i++ {
-		outArgs[i] = args[i].Pointer
-	}
-	return &Object{msgSendSuper(obj, method, outArgs...)}
-}
-
-func (obj *Object) CallSuperR(method string, arg NSRect) *Object {
-	return &Object{msgSendSuperR(obj, method, arg)}
+func (obj Object) CallSuperR(method string, arg NSRect) Object {
+	var super superStruct
+	super.receiver = obj
+	super.class = obj.Class().Super()
+	sel := C.sel_registerName(C.CString(method))
+	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, arg.CGRect())))
 }
 
 
