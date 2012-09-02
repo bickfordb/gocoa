@@ -446,22 +446,17 @@ func (obj Object) CallSuperR(method string, arg NSRect) Object {
 * Go doesn't support dynamic linking. However, it supports a C interface that supports
 * dynamic linking. And it supports symbol export allowing callbacks into go functions
 * using a C calling convention. So, Go supports dynamic linking. 
-*
-* XXX this function will probably fail with a panic rather than a message when I figure 
-* out why it's unreliable. 
  */
 func loadThySelf(symbol string) *[0]byte {
 
-	fmt.Println("symbol:", symbol)
-
 	this_process := C.dlopen(nil, C.RTLD_NOW)
 	if this_process == nil {
-		fmt.Println("********** error:", C.GoString(C.dlerror()))
+		panic(C.GoString(C.dlerror()))
 	}
 
 	symbol_address := C.dlsym(this_process, C.CString(symbol))
 	if symbol_address == nil {
-		fmt.Println("********** error:", C.GoString(C.dlerror()))
+		panic(C.GoString(C.dlerror()))
 	}
 
 	C.dlclose(this_process)
