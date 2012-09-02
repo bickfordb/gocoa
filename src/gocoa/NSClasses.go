@@ -37,5 +37,5 @@ const (
 )
 
 func NSColor(color string) *Object {
-	return &Object{ClassForName("NSColor").Instance(color).Pointer}
+	return ClassForName("NSColor").Instance(color)
 }

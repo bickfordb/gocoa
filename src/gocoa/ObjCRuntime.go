@@ -9,6 +9,16 @@ package gocoa
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 
+static inline void* gocoa_I(id self, SEL op, void* items, char** types, int argsCount) {
+	printf("gocoa_I(%d, %d)", -1, argsCount);
+	int i=0;
+	for(i=0; i<argsCount; i++) {
+		printf(", type:'%s'", types[i]);
+	}
+	printf(")\n");
+	return NULL;
+}
+
 static inline id gocoa_objc_msgSendI(id self, SEL op, long message) {
 	return objc_msgSend(self, op, message);
 }
@@ -83,6 +93,10 @@ func (cls *Class) Super() *Class {
 
 func (cls *Class) Instance(calling string, args ...uintptr) *Object {
 	return &Object{msgSend(&Object{cls.Pointer}, calling, args...)}
+}
+
+func (cls *Class) InstanceR(calling string, arg NSRect) *Object {
+	return &Object{msgSendR(&Object{cls.Pointer}, calling, arg)}
 }
 
 func (cls *Class) Method(name string) *Method {
@@ -331,8 +345,31 @@ func ObjectForId(object_id uintptr) *Object {
 * objc_msgSend_stret and objc_msgSend_fret, and they certainly have slightly different 
 * data types, which will be something for consideration when fixing the following.
 *
-* As of yet, it's a mess of that seems to work.
+* As of yet, it's a mess that seems to work.
  */
+
+ func (obj *Object) I(selector string, args...Passable) Passable {
+	
+	items := make([]unsafe.Pointer, len(args))
+	types := make([]*C.char, len(args))
+	
+	for i:=0; i<len(args); i++ {
+		types[i] = C.CString(args[i].TypeString())
+		if args[i].IsObject() {
+			items[i] = unsafe.Pointer(args[i].Id()) // (*C.id)(unsafe.Pointer(&args[0]))
+		} else {
+			items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
+		}
+	}
+	
+	sel := C.sel_registerName(C.CString(selector))
+	
+	result := C.gocoa_I(obj.idPointer(), sel, (unsafe.Pointer)(&items[0]), (**C.char)(&types[0]), (C.int)(len(items)))
+	
+	// XXX output conversion needed
+	return &Object{(uintptr)(unsafe.Pointer(result))}
+}
+
 
 // clumsy hacks abound
 func msgSendI(receiver *Object, selector string, number NSUInteger) uintptr {

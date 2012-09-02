@@ -1,61 +1,77 @@
 package gocoa
 
+//#cgo LDFLAGS: -lobjc
 //#include <CoreGraphics.h>
+//#include <objc/objc-runtime.h>
 import "C"
 import (
 	"bytes"
 	"encoding/binary"
 //	"strings"
 	"strconv"
+	"unsafe"
 )
 
-func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
-	return NSRect{Origin: NSPoint{X, Y}, Size: NSSize{Width, Height}}
+
+type Passable interface {
+ 	IsObject() 		bool
+	Id() 			C.id
+	Bytes() 		[]byte
+	TypeString() 	string
 }
 
-type NSRect struct {
-	Origin NSPoint
-	Size   NSSize
-}
+
+/* Object is not an NSObject, it's an ObjC object **********************************/
+
+func (obj *Object) Id() C.id { return obj.idPointer() }
+func (obj *Object) IsObject() bool { return true }
+func (obj *Object) Bytes() []byte { return make([]byte,0) }
+func (obj *Object) TypeString() string { return "@" }
+
+/* NSSize **************************************************************************/
 
 type NSSize struct {
 	Width  float64
 	Height float64
 }
 
+/* NSPoint *************************************************************************/
+
 type NSPoint struct {
 	X float64
 	Y float64
 }
 
+/* NSRect **************************************************************************/
 
+// define
+type NSRect struct {
+	Origin NSPoint
+	Size   NSSize
+}
+
+// create
+func NSMakeRect(X float64, Y float64, Width float64, Height float64) NSRect {
+	return NSRect{Origin: NSPoint{X, Y}, Size: NSSize{Width, Height}}
+}
+
+// implement Passable
+func (nsr *NSRect) Id() C.id { return (C.id)(unsafe.Pointer(&(nsr.Bytes()[0]))) }
+func (nsr *NSRect) IsObject() bool { return false }
+func (nsr *NSRect) Bytes() []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, nsr)
+	return buf.Bytes()
+}
+func (nsr *NSRect) TypeString() string { return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}" }
+
+// convert to/from CGRect
 func TypeNSRect(cgrect interface{}) NSRect {
 	var result NSRect
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, cgrect)
 	binary.Read(buf, binary.LittleEndian, &result)
 	return result
-}
-
-/*
-
-func (nsr *NSRect) Write() {
-
-}*/
-
-func (nsr *NSRect) String() string {
-	result := "["
-	result = result + strconv.FormatFloat(nsr.Origin.X, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Origin.Y, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Width, 'e',  -1, 64) + " "
-	result = result + strconv.FormatFloat(nsr.Size.Height, 'e',  -1, 64) + "]"
-	return result
-}
-
-func (nsr *NSRect) Bytes() []byte {
-	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, nsr)
-	return buf.Bytes()
 }
 
 func (nsr *NSRect) CGRect() C.CGRect {
@@ -65,9 +81,23 @@ func (nsr *NSRect) CGRect() C.CGRect {
 	return result
 }
 
+// pretty print
+func (nsr *NSRect) String() string {
+	result := "["
+	result = result + strconv.FormatFloat(nsr.Origin.X, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Origin.Y, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Width, 'e',  -1, 64) + " "
+	result = result + strconv.FormatFloat(nsr.Size.Height, 'e',  -1, 64) + "]"
+	return result
+}
+
+/* NSUInteger **************************************************************************/
+
 type NSUInteger uint64
 
-// XXX incomplete 
+
+/* type strings ************************************************************************/
+
 func objcArgTypeString(argType string) string {
 
 	switch argType {
