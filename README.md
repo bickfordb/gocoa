@@ -14,8 +14,8 @@ examples
 
 * HelloWorld.go demonstrates messaging and events between Go code and Interface Builder controls.
 * SimpleView.go (broken) displays a subclass NSView defined in Interface Builder and responds to drawRect: requests from NSApplication.
-* TableView.go (incomplete) displays and adds data to a NSTableView defined in Interface Builder.
-* Nibless.go (incomplete) defines its UI in code rather than using Interface Builder.
+* TableView.go displays and adds arbitrary data to a NSTableView defined in Interface Builder.
+* Nibless.go defines its UI in code rather than using Interface Builder.
 
 ...and what I really should be working on is getting an example using WebKit working. That's where Go's rubber meets the road.
 
@@ -23,7 +23,9 @@ examples
 To run any of the examples use, for example:
 
 	export GOPATH=`pwd` 
-	go run HelloWorld.go 
+	go build -o hello HelloWorld.go
+	./hello 
+
 
 
 nibble

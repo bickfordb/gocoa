@@ -52,5 +52,34 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	scrollTable1 := me.InstanceVariable("scrollTable1")
 	fmt.Println("scrollTable1 class:", scrollTable1.Class().Name())
-	//	textBox1.Call("setStringValue:", NSString("Form Loaded"))
+	tableView := scrollTable1.Call("documentView")
+	
+	
+	// add some stuff to the TableView
+	
+	arrayController := ClassForName("NSArrayController").Instance("alloc").Call("init")
+	dict := ClassForName("NSMutableDictionary").Instance("alloc").Call("init")
+	
+	objects := ClassForName("NSMutableArray").Instance("alloc").Call("init")
+	objects.Call("addObject:", NSString("Joe"))
+	objects.Call("addObject:", NSString("(444) 444-4444"))
+	
+	keys := ClassForName("NSMutableArray").Instance("alloc").Call("init")
+	keys.Call("addObject:", NSString("column1"))
+	keys.Call("addObject:", NSString("column2"))
+	
+	dict.Call("addObjects:forKeys:", objects, keys)
+	
+	arrayController.Class().ListMethods()
+	arrayController.Call("addObject:", dict)
+	
+		
+	column1 := tableView.Call("tableColumnWithIdentifier:", NSString("column1"))
+	column1.Call("bind:toObject:withKeyPath:options:", NSString("value"), arrayController, NSString("arrangedObjects.column1"), (Object)(0))
+	
+	column2 := tableView.Call("tableColumnWithIdentifier:", NSString("column2"))
+	column2.Call("bind:toObject:withKeyPath:options:", NSString("value"), arrayController, NSString("arrangedObjects.column2"), (Object)(0))
+		
+//	headerView := tableView.Call("headerView")
+//	headerView.Class().ListMethods()
 }
