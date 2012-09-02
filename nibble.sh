@@ -15,5 +15,4 @@
 
 # generate for SimpleView.go
 # go run nibble.go -a outlet itsView Controller SimpleView designable.nib > test.nib
-# go run nibble.go -a appdelegate Controller test.nib > test2.nib
 # cp test2.nib SimpleView.nib/designable.nib

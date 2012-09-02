@@ -22,24 +22,28 @@ import (
 *
 * I have a bug open that may be resolved with some coming linker changes, remains to be seen.
  */
- 
+
+ /*
 //export BIsOpaque
 func BIsOpaque(self C.id, op C.SEL) C.BOOL {
 	fmt.Println("isOpaque")
 	return (C.BOOL)(1)
-}
+}*/
 
 //export IInitWithFrame
 func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
-//	buf := new(bytes.Buffer)
-//	binary.Write(buf, binary.LittleEndian, aRect)
 	rect := TypeNSRect(aRect)
-	
 	simpleView := ObjectForId((uintptr)(unsafe.Pointer(self)))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
 	return (C.id)(unsafe.Pointer(simpleView.Pointer))
 }
+
+
+/*
+Fixing this is going to involve msgSend being able to return arbitrary data
+*/
+
 
 //export VDrawRect
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
@@ -47,17 +51,43 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 	fmt.Println("drawRect:", rect.String())
 		
 //	view := ObjectForId((uintptr)(unsafe.Pointer(self)))
+//	view.CallSuperR("drawRect:", rect)
+	
 //	view.ListInstanceVariables()
 //	view.ListMethods()
 //	view.Class().Super().ListMethods()
 
 //	"To kill you must know your enemy. And in this case, my enemy, is a varmint."
 	
-	bezier := ClassForName("NSBezierPath").Instance("init")
-//	bezier.ListMethods()
-	NSColor(RedColor).Call("set")
+//	rect2 := NSMakeRect(rect)
 	
-	bezier.CallR("fillRect:",rect) 
+//	transform := ClassForName("NSAffineTransform").Instance("transform")
+//	bezier := ClassForName("NSBezierPath").Instance("bezierPath")
+	
+	
+// need window location I guess
+	
+	NSColor(GreenColor).Call("set")
+	
+	rect2 := NSMakeRect(5,5,50,50)
+	fmt.Println("rect2:", rect2.String())
+	
+	ClassForName("NSBezierPath").InstanceR("fillRect:", rect2)
+	
+	
+//	bezier.Call("fill")
+	
+	
+	//.Call("init")
+//	bezier.ListMethods()
+//	bezier.Class().Super().ListMethods()
+	
+	
+//	bounds := bezier.Call("bounds") 
+//	fmt.Println("bounds:", bounds.String())
+	
+//	bezier.Call("fill") 
+//	bezier.CallR("fillRect:",rect) 
 
 }
 
@@ -78,7 +108,6 @@ func main() {
 	view := ClassForName("NSView").Subclass("SimpleView")
 	view.AddMethod("initWithFrame:", IInitWithFrame)
 	view.AddMethod("drawRect:", VDrawRect)
-	view.AddMethod("isOpaque", BIsOpaque)		// XXX
 	view.Register()
 
 	controller := ClassForName("NSObject").Subclass("Controller")
@@ -93,7 +122,10 @@ func main() {
 
 	bundle = bundle.Call("initWithPath:", path)
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
-
+	
+	rect := NSMakeRect(0,0,0,0)
+	bundle.I("initWithPath:", path, &rect)
+	
 	app.Call("run")
 
 }
