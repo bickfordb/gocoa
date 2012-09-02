@@ -47,7 +47,7 @@ If you don't like bugs, don't use nibble just yet. There are some limitations in
 license
 -------
 
-Three-clause BSD, attribution with liberal redistribution rights. The Gopher icns is a derived work and CC-BY the Go Authors.
+Three-clause BSD, attribution with liberal redistribution rights. The Gopher icns is a derived work and CC-BY Renee French & the Go Authors.
 
 reasoning
 ---------
