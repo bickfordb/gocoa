@@ -27,7 +27,6 @@ To run any of the examples use, for example:
 	./hello 
 
 
-
 nibble
 ------
 
@@ -50,6 +49,7 @@ license
 -------
 
 Three-clause BSD, attribution with liberal redistribution rights. The Gopher icns is a derived work and CC-BY Renee French & the Go Authors.
+
 
 reasoning
 ---------

@@ -2,34 +2,46 @@ package gocoa
 
 /*
 #cgo CFLAGS: -I/System/Library/Frameworks/CoreGraphics.framework/Versions/A/Headers/
-#cgo LDFLAGS: -lobjc
+#cgo LDFLAGS: -lobjc -lffi
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <ffi/ffi.h>
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 
-CGRect*	fpCGRect(void* in) { return (CGRect*)in; }
-id*		fpId	(void* in) { return (id*)in; }
+// beginnings of a proper solution, debugging
+static inline void gocoa_I(id self, SEL op, id* result, void* args[], char** types, int argsCount) {
+	printf("gocoa_I(%p, %p", self, op);
+	
+	int			i;
+	ffi_cif		cif;
+	ffi_type	**ffi_types;
+	void		**ffi_values;
 
-
-static inline id gocoa_I(id self, SEL op, void* items[], char** types, int argsCount) {
-	printf("gocoa_I(%d, %d)", -1, argsCount);
-	int i=0;
-	for(; i<argsCount; i++) {
-		printf(", type:'%s'", types[i]);
+	ffi_types  = (ffi_type **) malloc((argsCount+2)*sizeof(ffi_type *));
+	ffi_values = (void **) malloc((argsCount+2)*sizeof(void *));
+	
+	ffi_types[0] = &ffi_type_pointer;
+	ffi_values[0] = &self;
+  	ffi_types[1] = &ffi_type_pointer;
+	ffi_values[1] = &op;
+	
+	for (i = 0; i < argsCount; i++) {
+		printf(", %p ('%s')", args[i], types[i]);
+		ffi_types[2+i] = &ffi_type_pointer;
+		ffi_values[2+i] = &args[i];
 	}
-	printf(")\n");
-
-	switch (argsCount) {
-		case 1: return objc_msgSend(self, op, *fpId(items[0]));
-//		case 2: return objc_msgSend(self, op, items[0], items[1]);
-//		case 3: return objc_msgSend(self, op, items[0], items[1], items[2]);
-//		case 4: return objc_msgSend(self, op, items[0], items[1], items[2], items[3]);
-//		case 5: return objc_msgSend(self, op, items[0], items[1], items[2], items[3], items[4]);
-		default: return objc_msgSend(self, op);
-	}
-
+	
+	if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argsCount+2, &ffi_type_uint, ffi_types) == FFI_OK) {
+		ffi_call(&cif, (void (*)()) objc_msgSend, result, ffi_values);
+	} 
+	
+	free(ffi_types);
+	free(ffi_values);
+	
+	printf(", %d) out: %p\n", argsCount, result);
 }
 
 
@@ -357,34 +369,54 @@ func ObjectForId(object_id uintptr) Object {
 * As of yet, it's a mess that seems to work.
  */
 
-func (obj Object) I(selector string, args ...Passable) Passable {
-
-	items := make([]unsafe.Pointer, len(args))
-	types := make([]*C.char, len(args))
-
-	for i := 0; i < len(args); i++ {
-
-		value := reflect.ValueOf(args[i])
-
-		types[i] = C.CString(args[i].TypeString())
-
-		fmt.Println("value.String()", value.String()) // 
-
-		if value.String() == "<gocoa.Object Value>" {
-			items[i] = unsafe.Pointer(args[i].Id())
-		} else {
-			items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
-		}
-	}
-
-	sel := C.sel_registerName(C.CString(selector))
+// one possibility is that this always returns an object, always converting structs to 
+// pointers on output, seems the general case
+func (obj Object) I(selector string, args ...Passable) Object {
+	
 	var result C.id
+	sel := C.sel_registerName(C.CString(selector))
+	
+	if len(args) > 0 {
+	
+		items := make([]unsafe.Pointer, len(args))
+		types := make([]*C.char, len(args))
 
-	result = C.gocoa_I(obj.idPointer(), sel, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
+		for i := 0; i < len(args); i++ {
 
+			value := reflect.ValueOf(args[i])
+			types[i] = C.CString(args[i].TypeString())
+
+			if value.String() == "<gocoa.Object Value>" {
+				items[i] = unsafe.Pointer(args[i].Id())
+			} else {
+				items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
+			}
+		}
+		
+		C.gocoa_I(obj.idPointer(), sel, &result, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
+	
+	} else {
+		
+		result = C.objc_msgSend(obj.idPointer(), sel)
+	}
+		
 	// XXX output conversion needed
 	return (Object)(unsafe.Pointer(result))
 }
+
+/*
+* Call()
+* Notice that you have to pass a pointer to the first array element to match the c array calling convention.
+*/
+func (obj Object) Call(method string, args ...Object) Object {
+	sel := C.sel_registerName(C.CString(method))
+	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
+		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.idPointer(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
+	}
+	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))
+} 
+
+
 
 // clumsy hacks abound
 
@@ -404,17 +436,6 @@ func (obj Object) CallI(method string, arg NSUInteger) Object {
 	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.idPointer(), sel, (C.long)(arg))))
 }
 
-/*
-* Call()
-* Notice that you have to pass a pointer to the first array element to match the c array calling convention.
- */
-func (obj Object) Call(method string, args ...Object) Object {
-	sel := C.sel_registerName(C.CString(method))
-	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.idPointer(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
-	}
-	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))
-}
 
 /*
 * CallSuper()
@@ -440,6 +461,8 @@ func (obj Object) CallSuperR(method string, arg NSRect) Object {
 	sel := C.sel_registerName(C.CString(method))
 	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, arg.CGRect())))
 }
+
+
 
 /*
 * loadThySelf()

@@ -74,20 +74,22 @@ func main() {
 
 	app := ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := ClassForName("NSBundle").Instance("alloc")
-	path := NSString(".")
 	dict := NSDictionary("NSOwner", app)
 
-	bundle = bundle.Call("initWithPath:", path)
+	bundle = bundle.Call("initWithPath:", NSString("."))
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
 	
 	
 	
 	// testing message passing
 	
-//	windowsArray := app.Call("windows")
-//	windowsCount := (NSUInteger)(windowsArray.Call("count"))
+	windowsArray := app.Call("windows")
+	windowsCount := (NSUInteger)(windowsArray.Call("count"))	
+	bundle.I("initWithPath:", NSString("A String"), MakeNSRect(0,0,0,0), windowsArray, windowsCount, MakeNSBoolean(true))
+	fmt.Println("windowsCount", windowsCount)
 	
-//	bundle.I("initWithPath:", path, NSMakeRect(0,0,0,0), windowsCount, NSMakeBoolean(true))
+	windowsCount = (NSUInteger)(windowsArray.I("count"))
+	fmt.Println("windowsCount", windowsCount)
 	
 	app.Call("run")
 
