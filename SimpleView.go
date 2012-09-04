@@ -27,7 +27,7 @@ import (
 //export IInitWithFrame
 func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	rect := TypeNSRect(aRect)
-	simpleView := ObjectForId((uintptr)(unsafe.Pointer(self)))
+	simpleView := (Object)(unsafe.Pointer(self))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
 	
@@ -51,7 +51,7 @@ func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 //export ZWindowResize
 func ZWindowResize(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("windowDidResize:")
-	controller := ObjectForId((uintptr)(unsafe.Pointer(self)))
+	controller := (Object)(unsafe.Pointer(self))
 	simpleView := controller.InstanceVariable("itsView")
 	simpleView.Call("invalidateIntrinsicContentSize")
 }

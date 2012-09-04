@@ -95,25 +95,29 @@ import (
 
 type Class uintptr
 
-func (cls Class) classPointer() C.Class {
+func ClassForName(name string) Class {
+	return (Class)(unsafe.Pointer(C.objc_getClass(C.CString(name))))
+}
+
+func (cls Class) cclass() C.Class {
 	return (C.Class)(unsafe.Pointer(cls))
 }
 
-func (cls Class) idPointer() C.id {
+func (cls Class) cid() C.id {
 	return (C.id)(unsafe.Pointer(cls))
 }
 
-func (cls Class) respondsTo(selector string) bool {
+func (cls Class) RespondsTo(selector string) bool {
 	sel := C.sel_registerName(C.CString(selector))
-	return (C.class_respondsToSelector(cls.classPointer(), sel) == 1)
+	return (C.class_respondsToSelector(cls.cclass(), sel) == 1)
 }
 
 func (cls Class) Name() string {
-	return C.GoString(C.class_getName(cls.classPointer()))
+	return C.GoString(C.class_getName(cls.cclass()))
 }
 
 func (cls Class) Super() Class {
-	return (Class)(unsafe.Pointer(C.class_getSuperclass(cls.classPointer())))
+	return (Class)(unsafe.Pointer(C.class_getSuperclass(cls.cclass())))
 }
 
 func (cls Class) Instance(method string, args ...Object) Object {
@@ -128,11 +132,11 @@ func (cls Class) InstanceR(method string, arg NSRect) Object {
 
 func (cls Class) Method(name string) Method {
 	sel := C.sel_registerName(C.CString(name))
-	return (Method)(unsafe.Pointer(C.class_getClassMethod(cls.classPointer(), sel)))
+	return (Method)(unsafe.Pointer(C.class_getClassMethod(cls.cclass(), sel)))
 }
 
 func (cls Class) Property(name string) Property {
-	return (Property)(unsafe.Pointer(C.class_getProperty(cls.classPointer(), C.CString(name))))
+	return (Property)(unsafe.Pointer(C.class_getProperty(cls.cclass(), C.CString(name))))
 }
 
 func (cls Class) ListInstanceVariables() {
@@ -142,7 +146,7 @@ func (cls Class) ListInstanceVariables() {
 	var outCount C.uint
 	var ivarPointers []C.Ivar
 
-	p := (C.class_copyIvarList(cls.classPointer(), &outCount))
+	p := (C.class_copyIvarList(cls.cclass(), &outCount))
 
 	if p != nil {
 		ivarPointers = (*[1 << 30]C.Ivar)(unsafe.Pointer(p))[0:outCount]
@@ -161,7 +165,7 @@ func (cls Class) ListMethods() {
 	var outCount C.uint
 	var methodPointers []C.Method
 
-	p := (C.class_copyMethodList(cls.classPointer(), &outCount))
+	p := (C.class_copyMethodList(cls.cclass(), &outCount))
 
 	if p != nil {
 		methodPointers = (*[1 << 30]C.Method)(unsafe.Pointer(p))[0:outCount]
@@ -180,7 +184,7 @@ func (cls Class) ListProperties() {
 	var outCount C.uint
 	var properties []C.objc_property_t
 
-	p := (C.class_copyPropertyList(cls.classPointer(), &outCount))
+	p := (C.class_copyPropertyList(cls.cclass(), &outCount))
 
 	if p != nil {
 		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
@@ -197,23 +201,23 @@ func (cls Class) ListProperties() {
 type Object uintptr
 
 // XXX name collision in C.types, can't use C.Object
-func (obj Object) idPointer() C.id {
+func (obj Object) cid() C.id {
 	return (C.id)(unsafe.Pointer(obj))
 }
 
-func (obj Object) getMethod(name string) Method {
+func (obj Object) Method(name string) Method {
 	sel := C.sel_registerName(C.CString(name))
-	return (Method)(unsafe.Pointer(C.class_getInstanceMethod(obj.Class().classPointer(), sel)))
+	return (Method)(unsafe.Pointer(C.class_getInstanceMethod(obj.Class().cclass(), sel)))
 }
 
 func (obj Object) Class() Class {
-	return (Class)(unsafe.Pointer(C.object_getClass(obj.idPointer())))
+	return (Class)(unsafe.Pointer(C.object_getClass(obj.cid())))
 }
 
 // XXX this does not necessarily return an object pointer
 func (obj Object) InstanceVariable(name string) Object {
 	var val uintptr
-	ivar := C.object_getInstanceVariable(obj.idPointer(), C.CString(name), (*unsafe.Pointer)(unsafe.Pointer(&val)))
+	ivar := C.object_getInstanceVariable(obj.cid(), C.CString(name), (*unsafe.Pointer)(unsafe.Pointer(&val)))
 	typeenc := C.GoString(C.ivar_getTypeEncoding(ivar))
 
 	if typeenc == "@" {
@@ -223,13 +227,13 @@ func (obj Object) InstanceVariable(name string) Object {
 }
 
 func (obj Object) SetInstanceVariable(name string, val Object) {
-	C.object_setInstanceVariable(obj.idPointer(), C.CString(name), unsafe.Pointer(val))
+	C.object_setInstanceVariable(obj.cid(), C.CString(name), unsafe.Pointer(val))
 }
 
 /* class creation methods ------------------------------------------------------------- */
 
 func (cls Class) Subclass(subclassName string) Class {
-	class_id := C.objc_allocateClassPair(cls.classPointer(), C.CString(subclassName), (C.size_t)(0))
+	class_id := C.objc_allocateClassPair(cls.cclass(), C.CString(subclassName), (C.size_t)(0))
 	return (Class)(unsafe.Pointer(class_id))
 }
 
@@ -256,7 +260,7 @@ func (cls Class) AddMethod(methodName string, implementor interface{}) bool {
 
 		sel := C.sel_registerName(C.CString(methodName))
 		imp := loadThySelf(impName)
-		result := C.class_addMethod(cls.classPointer(), sel, imp, C.CString(types))
+		result := C.class_addMethod(cls.cclass(), sel, imp, C.CString(types))
 
 		return (result == 1)
 	}
@@ -269,13 +273,13 @@ func (cls Class) AddIvar(ivarName string, ivarClass Class) bool {
 	types := objcArgTypeString(ivarClass.Name())
 	size := (C.size_t)(unsafe.Sizeof(cls))
 	alignment := (C.uint8_t)(math.Log2((float64)(unsafe.Sizeof(cls))))
-	result := C.class_addIvar(cls.classPointer(), C.CString(ivarName), size, alignment, C.CString(types))
+	result := C.class_addIvar(cls.cclass(), C.CString(ivarName), size, alignment, C.CString(types))
 
 	return (result == 1)
 }
 
 func (cls Class) Register() {
-	C.objc_registerClassPair(cls.classPointer())
+	C.objc_registerClassPair(cls.cclass())
 }
 
 /* method implementation ************************************************************** */
@@ -286,35 +290,35 @@ func SelectorForName(name string) Selector {
 	return (Selector)(unsafe.Pointer(C.sel_registerName(C.CString(name))))
 }
 
-func (sel Selector) selPointer() C.SEL {
+func (sel Selector) csel() C.SEL {
 	return (C.SEL)(unsafe.Pointer(sel))
 }
 
 func (sel Selector) Name() string {
-	return C.GoString(C.sel_getName(sel.selPointer()))
+	return C.GoString(C.sel_getName(sel.csel()))
 }
 
 /* method implementation ************************************************************** */
 
 type Method uintptr
 
-func (mthd Method) methodPointer() C.Method {
+func (mthd Method) cmethod() C.Method {
 	return (C.Method)(unsafe.Pointer(mthd))
 }
 
 func (mthd Method) ArgumentCount() int {
-	return (int)(C.method_getNumberOfArguments(mthd.methodPointer()))
+	return (int)(C.method_getNumberOfArguments(mthd.cmethod()))
 }
 
 func (mthd Method) ArgumentType(index int) string {
 	var dst_len C.size_t
 	var dst *C.char
-	C.method_getArgumentType(mthd.methodPointer(), (C.uint)(index), dst, dst_len)
+	C.method_getArgumentType(mthd.cmethod(), (C.uint)(index), dst, dst_len)
 	return C.GoString(dst)
 }
 
 func (mthd Method) Name() string {
-	return C.GoString(C.sel_getName(C.method_getName(mthd.methodPointer())))
+	return C.GoString(C.sel_getName(C.method_getName(mthd.cmethod())))
 }
 
 /***************************************************************************************
@@ -341,15 +345,6 @@ func (prop Property) Attributes() string {
 	return C.GoString(C.property_getAttributes((C.objc_property_t)(unsafe.Pointer(prop))))
 }
 
-/* utility methods ********************************************************************/
-
-func ClassForName(name string) Class {
-	return (Class)(unsafe.Pointer(C.objc_getClass(C.CString(name))))
-}
-
-func ObjectForId(object_id uintptr) Object {
-	return (Object)(object_id)
-}
 
 /* messaging functions *************************************************************** 
 *
@@ -393,11 +388,11 @@ func (obj Object) I(selector string, args ...Passable) Object {
 			}
 		}
 		
-		C.gocoa_I(obj.idPointer(), sel, &result, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
+		C.gocoa_I(obj.cid(), sel, &result, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
 	
 	} else {
 		
-		result = C.objc_msgSend(obj.idPointer(), sel)
+		result = C.objc_msgSend(obj.cid(), sel)
 	}
 		
 	// XXX output conversion needed
@@ -411,9 +406,9 @@ func (obj Object) I(selector string, args ...Passable) Object {
 func (obj Object) Call(method string, args ...Object) Object {
 	sel := C.sel_registerName(C.CString(method))
 	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.idPointer(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
+		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.cid(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
 	}
-	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.idPointer(), sel)))
+	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.cid(), sel)))
 } 
 
 
@@ -428,12 +423,12 @@ type superStruct struct {
 // XXX all of these are pointless, fix
 func (obj Object) CallR(method string, arg NSRect) Object {
 	sel := C.sel_registerName(C.CString(method))
-	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendR(obj.idPointer(), sel, arg.CGRect())))
+	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendR(obj.cid(), sel, arg.CGRect())))
 }
 
 func (obj Object) CallI(method string, arg NSUInteger) Object {
 	sel := C.sel_registerName(C.CString(method))
-	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.idPointer(), sel, (C.long)(arg))))
+	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.cid(), sel, (C.long)(arg))))
 }
 
 

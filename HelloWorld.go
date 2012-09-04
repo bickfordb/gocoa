@@ -43,7 +43,7 @@ func main() {
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("applicationWillFinishLaunching:")
 
-	notify := ObjectForId((uintptr)(unsafe.Pointer(notification)))
+	notify := (Object)(unsafe.Pointer(notification))
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
@@ -54,7 +54,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 
-	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := (Object)(unsafe.Pointer(self))
 	textBox1 := me.InstanceVariable("textBox1")
 	textBox1.Call("setStringValue:", NSString("Form Loaded"))
 }
@@ -62,7 +62,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 //export IButtonClick
 func IButtonClick(self C.id, op C.SEL, sender C.id) {
 	fmt.Println("buttonClick:")
-	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := (Object)(unsafe.Pointer(self))
 	textBox1 := me.InstanceVariable("textBox1")
 	textBox1.Call("setStringValue:", NSString("Button Pushed"))
 }

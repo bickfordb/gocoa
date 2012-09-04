@@ -38,7 +38,7 @@ func main() {
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	fmt.Println("applicationWillFinishLaunching:")
 
-	notify := ObjectForId((uintptr)(unsafe.Pointer(notification)))
+	notify := (Object)(unsafe.Pointer(notification))
 	application := notify.Call("object")
 
 	windowsArray := application.Call("windows")
@@ -49,7 +49,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 
-	me := ObjectForId((uintptr)(unsafe.Pointer(self)))
+	me := (Object)(unsafe.Pointer(self))
 	scrollTable1 := me.InstanceVariable("scrollTable1")
 	fmt.Println("scrollTable1 class:", scrollTable1.Class().Name())
 	tableView := scrollTable1.Call("documentView")

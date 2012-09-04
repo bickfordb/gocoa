@@ -23,13 +23,13 @@ type Passable interface {
 
 /* Object **************************************************************************/
 
-func (obj Object) Id() C.id           { return obj.idPointer() }
+func (obj Object) Id() C.id           { return obj.cid() }
 func (obj Object) Bytes() []byte      { return make([]byte, 0) }
 func (obj Object) TypeString() string { return "@" }
 
 /* Selector ************************************************************************/
 
-func (sel Selector) Id() C.id           { return (C.id)(unsafe.Pointer(sel.selPointer())) }
+func (sel Selector) Id() C.id           { return (C.id)(unsafe.Pointer(sel.csel())) }
 func (sel Selector) Bytes() []byte      { return make([]byte, 0) }
 func (sel Selector) TypeString() string { return ":" }
 
