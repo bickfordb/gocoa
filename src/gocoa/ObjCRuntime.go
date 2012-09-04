@@ -139,6 +139,8 @@ func (cls Class) Property(name string) Property {
 	return (Property)(unsafe.Pointer(C.class_getProperty(cls.cclass(), C.CString(name))))
 }
 
+// XXX ListXxx methods should be removed, replaced with accessors for types, remove fmt and add proper error handling
+
 func (cls Class) ListInstanceVariables() {
 
 	fmt.Println(cls.Name(), ": ivars")
@@ -221,9 +223,9 @@ func (obj Object) InstanceVariable(name string) Object {
 	typeenc := C.GoString(C.ivar_getTypeEncoding(ivar))
 
 	if typeenc == "@" {
-		return (Object)(val)
+		// do something
 	}
-	return 0
+	return (Object)(val)
 }
 
 func (obj Object) SetInstanceVariable(name string, val Object) {

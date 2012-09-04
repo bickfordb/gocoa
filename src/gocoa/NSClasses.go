@@ -14,6 +14,9 @@ func NSString(inString string) Object {
 	return ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr)
 }
 
+func NSStringToString(inString Object) string {
+	return C.GoString((*C.char)(unsafe.Pointer(inString.Call("UTF8String"))))
+}
 
 const (
 	BlackColor     = "blackColor"
