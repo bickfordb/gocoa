@@ -7,17 +7,12 @@ package main
 import "C"
 
 import (
-	"fmt"
 	. "gocoa"
 	"unsafe"
 )
 
-/*
-* main()
-* Main function for testing
- */
-func main() {
 
+func main() {
 	hellow := ClassForName("NSObject").Subclass("ApplicationController")
 	hellow.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
 	hellow.AddMethod("buttonClick:", IButtonClick)
@@ -41,8 +36,6 @@ func main() {
 
 //export BApplicationWillFinishLaunching
 func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
-	fmt.Println("applicationWillFinishLaunching:")
-
 	notify := (Object)(unsafe.Pointer(notification))
 	application := notify.Call("object")
 
@@ -61,7 +54,6 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 
 //export IButtonClick
 func IButtonClick(self C.id, op C.SEL, sender C.id) {
-	fmt.Println("buttonClick:")
 	me := (Object)(unsafe.Pointer(self))
 	textBox1 := me.InstanceVariable("textBox1")
 	textBox1.Call("setStringValue:", NSString("Button Pushed"))
