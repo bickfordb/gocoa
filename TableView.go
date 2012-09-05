@@ -18,10 +18,10 @@ import (
  */
 func main() {
 
-	hellow := ClassForName("NSObject").Subclass("ApplicationController")
-	hellow.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
-	hellow.AddIvar("scrollTable1", ClassForName("NSScrollView"))
-	hellow.Register()
+	appctrl := ClassForName("NSObject").Subclass("ApplicationController")
+	appctrl.AddMethod("applicationWillFinishLaunching:", BApplicationWillFinishLaunching)
+	appctrl.AddIvar("scrollTable1", ClassForName("NSScrollView"))
+	appctrl.Register()
 
 	app := ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := ClassForName("NSBundle").Instance("alloc")
@@ -70,7 +70,6 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	
 	dict.Call("addObjects:forKeys:", objects, keys)
 	
-	arrayController.Class().ListMethods()
 	arrayController.Call("addObject:", dict)
 	
 		
