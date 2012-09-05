@@ -23,6 +23,11 @@ import (
 * I have a bug open that may be resolved with some coming linker changes, remains to be seen.
  */
 
+//export AcceptsFirstResponder
+func AcceptsFirstResponder(self C.id, op C.SEL) C.BOOL {
+	fmt.Println("acceptsFirstResponder")
+	return 1
+}
 
 //export IInitWithFrame
 func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
@@ -30,30 +35,54 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	simpleView := (Object)(unsafe.Pointer(self))
 	simpleView = simpleView.Class().Instance("alloc")
 	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
-	
 	return (C.id)(unsafe.Pointer(simpleView))
 }
 
 //export VDrawRect
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
+	view := (Object)(unsafe.Pointer(self))
 	rect := TypeNSRect(aRect)
-	fmt.Println("drawRect:", rect.String())
+	
+//	C.NSRectFill(rect)
+	
+	fmt.Println("drawRect:", rect)
+//	view.Call("lockFocus")
+	view.CallSuperR("drawRect:", rect)
+//	view.CallSuper("lockFocus")
+	
+/*
+fixes:
+
+get NSGraphicsContext directly
+	lockFocus and unlockFocus - get apple docs for use
+
+test nib by creating an objc app that uses the same nib	
+
+super is broken, is callsuper doing anything?
+	are methods passing through?									- test case
+	is SimpleView actually instantiated properly as a subclass?		- test case
+
+can we call a "delegate" method?
+
+*/
+	
+	NSColor(WhiteColor).Call("set")
+	ClassForName("NSBezierPath").InstanceR("fillRect:", rect)
 	
 	NSColor(GreenColor).Call("set")
-		
 	rect2 := MakeNSRect(5,5,50,50)
-	fmt.Println("rect2:", rect2.String())
 	
 	ClassForName("NSBezierPath").InstanceR("fillRect:", rect2)
-
+	
+//	view.CallSuper("unlockFocus")
 }
 
 //export ZWindowResize
 func ZWindowResize(self C.id, op C.SEL, notification C.id) {
-	fmt.Println("windowDidResize:")
 	controller := (Object)(unsafe.Pointer(self))
 	simpleView := controller.InstanceVariable("itsView")
 	simpleView.Call("invalidateIntrinsicContentSize")
+//	simpleView.CallSuper("setNeedsDisplay")
 }
 
 /*
@@ -63,6 +92,7 @@ func ZWindowResize(self C.id, op C.SEL, notification C.id) {
 func main() {
 
 	view := ClassForName("NSView").Subclass("SimpleView")
+	view.AddMethod("acceptsFirstResponder", AcceptsFirstResponder)
 	view.AddMethod("initWithFrame:", IInitWithFrame)
 	view.AddMethod("drawRect:", VDrawRect)
 	view.Register()
@@ -82,14 +112,14 @@ func main() {
 	
 	
 	// testing message passing
-	
+	/*
 	windowsArray := app.Call("windows")
 	windowsCount := (NSUInteger)(windowsArray.Call("count"))	
 	bundle.I("initWithPath:", NSString("A String"), MakeNSRect(0,0,0,0), windowsArray, windowsCount, MakeNSBoolean(true))
 	fmt.Println("windowsCount", windowsCount)
 	
 	windowsCount = (NSUInteger)(windowsArray.I("count"))
-	fmt.Println("windowsCount", windowsCount)
+	fmt.Println("windowsCount", windowsCount)*/
 	
 	app.Call("run")
 
