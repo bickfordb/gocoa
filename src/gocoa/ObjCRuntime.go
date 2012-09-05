@@ -83,7 +83,6 @@ static inline id gocoa_objc_msgSendSuper(struct objc_super *super, SEL op, id me
 import "C"
 
 import (
-	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -130,6 +129,10 @@ func (cls Class) InstanceR(method string, arg NSRect) Object {
 	return obj.CallR(method, arg)
 }
 
+func (cls Class) Ivar(name string) Ivar {
+	return (Ivar)(unsafe.Pointer(C.class_getInstanceVariable(cls.cclass(), C.CString(name))))
+}
+
 func (cls Class) Method(name string) Method {
 	sel := C.sel_registerName(C.CString(name))
 	return (Method)(unsafe.Pointer(C.class_getClassMethod(cls.cclass(), sel)))
@@ -139,63 +142,49 @@ func (cls Class) Property(name string) Property {
 	return (Property)(unsafe.Pointer(C.class_getProperty(cls.cclass(), C.CString(name))))
 }
 
-// XXX ListXxx methods should be removed, replaced with accessors for types, remove fmt and add proper error handling
-
-func (cls Class) ListInstanceVariables() {
-
-	fmt.Println(cls.Name(), ": ivars")
-
+func (cls Class) Ivars() []Ivar {
 	var outCount C.uint
 	var ivarPointers []C.Ivar
-
 	p := (C.class_copyIvarList(cls.cclass(), &outCount))
-
+	result := make([]Ivar, outCount)
 	if p != nil {
 		ivarPointers = (*[1 << 30]C.Ivar)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := (Ivar)(unsafe.Pointer(ivarPointers[i]))
-			fmt.Println("\t", tmp.Name())
+			result[i] = (Ivar)(unsafe.Pointer(ivarPointers[i]))
 		}
 		C.free(unsafe.Pointer(p))
 	}
+	return result
 }
 
-func (cls Class) ListMethods() {
-
-	fmt.Println(cls.Name(), ": methods")
-
+func (cls Class) Methods() []Method {
 	var outCount C.uint
 	var methodPointers []C.Method
-
 	p := (C.class_copyMethodList(cls.cclass(), &outCount))
-
+	result := make([]Method, outCount)
 	if p != nil {
 		methodPointers = (*[1 << 30]C.Method)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := (Method)(unsafe.Pointer(methodPointers[i]))
-			fmt.Println("\t", tmp.Name())
+			result[i] = (Method)(unsafe.Pointer(methodPointers[i]))
 		}
 		C.free(unsafe.Pointer(p))
 	}
+	return result
 }
 
-func (cls Class) ListProperties() {
-
-	fmt.Println(cls.Name(), ": properties")
-
+func (cls Class) Properties() []Property {
 	var outCount C.uint
 	var properties []C.objc_property_t
-
 	p := (C.class_copyPropertyList(cls.cclass(), &outCount))
-
+	result := make([]Property, outCount)
 	if p != nil {
 		properties = (*[1 << 30]C.objc_property_t)(unsafe.Pointer(p))[0:outCount]
 		for i := 0; i < int(outCount); i++ {
-			tmp := (Property)(unsafe.Pointer(properties[i]))
-			fmt.Println("\t", tmp.Name(), "(", tmp.Attributes(), ")")
+			result[i] = (Property)(unsafe.Pointer(properties[i]))
 		}
 		C.free(unsafe.Pointer(p))
 	}
+	return result
 }
 
 /* object implementation ********************************************************************/
@@ -251,7 +240,6 @@ func (cls Class) AddMethod(methodName string, implementor interface{}) bool {
 
 		if v.Type().NumOut() == 1 {
 			types = objcArgTypeString(trimPackage(v.Type().Out(0).String()))
-			fmt.Println("typeout:", types)
 		}
 
 		for i := 0; i < numArgs; i++ {
