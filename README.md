@@ -6,7 +6,11 @@ Objective-C bridge for Go
 status
 ------
 
-The code is still rapidly evolving, and as a result does not represent a stable interface. I am still working out the semantics, fundamental things will change, caveat emptor, etc. It is however a fairly concise example of how to go about interfacing the Objective-C runtime.
+You can get a quick synopsis of the current status with:
+
+	go test gocoa
+
+The Objective-C runtime interface is settling down a bit as I become more familiar with the Go language, its capabilities and limitations. A problem with the Go linker isn't a showstopper, but requires some dancing around. I've also written some dumb code to get things working quickly. With a test framework in place, I can replace it.
 
 
 examples
@@ -70,4 +74,3 @@ In studying other projects, I noticed that in each of them a lot of unnecessary 
 
 I think it would probably be easier to add a new object runtime to Go (Objective-Go?) than to retrofit this existing one. I've read some papers on very small runtimes that are interesting. OTOH, I don't yet have a strong argument for one.
 
-Whether Go needs OOP features or not is the subject of plenty of mailing list gripes. My thinking is: it's unreasonable to ask somebody else to build and maintain something that you want for yourself, and similarly unreasonable to ask someone to understand and then maintain something for you. 
