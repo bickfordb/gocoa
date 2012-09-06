@@ -34,20 +34,20 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 	rect := TypeNSRect(aRect)
 	simpleView := (Object)(unsafe.Pointer(self))
 	simpleView = simpleView.Class().Instance("alloc")
-	simpleView = simpleView.CallSuperR("initWithFrame:", rect)
+	simpleView = simpleView.CallSuper("initWithFrame:", rect)
 	return (C.id)(unsafe.Pointer(simpleView))
 }
 
 //export VDrawRect
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
-	view := (Object)(unsafe.Pointer(self))
+//	view := (Object)(unsafe.Pointer(self))
 	rect := TypeNSRect(aRect)
 	
 //	C.NSRectFill(rect)
 	
 	fmt.Println("drawRect:", rect)
 //	view.Call("lockFocus")
-	view.CallSuperR("drawRect:", rect)
+//	view.CallSuper("drawRect:", rect)
 //	view.CallSuper("lockFocus")
 	
 /*
@@ -67,12 +67,12 @@ can we call a "delegate" method?
 */
 	
 	NSColor(WhiteColor).Call("set")
-	ClassForName("NSBezierPath").InstanceR("fillRect:", rect)
+	ClassForName("NSBezierPath").Instance("fillRect:", rect)
 	
 	NSColor(GreenColor).Call("set")
 	rect2 := MakeNSRect(5,5,50,50)
 	
-	ClassForName("NSBezierPath").InstanceR("fillRect:", rect2)
+	ClassForName("NSBezierPath").Instance("fillRect:", rect2)
 	
 //	view.CallSuper("unlockFocus")
 }
@@ -106,7 +106,21 @@ func main() {
 	bundle := ClassForName("NSBundle").Instance("alloc")
 	dict := NSDictionary("NSOwner", app)
 
-	bundle = bundle.Call("initWithPath:", NSString("."))
+	fmt.Printf("dict %p\n", unsafe.Pointer(dict))
+	fmt.Printf("bundle %p\n", unsafe.Pointer(bundle))
+	
+	thePath := NSString(".")
+	
+	fmt.Printf("thePath %p\n", unsafe.Pointer(thePath))
+	
+	// XXX the crash, passing passable, address looks program local, allocating elsewhere, 
+	// something like stringwithcopy may be the solution
+	// is the type going to be @?
+	// am I setting the ffi parameter type correctly? no <-this 
+	bundle = bundle.Call("initWithPath:", thePath)		// is this about where this memory reference comes from?
+	
+	
+	
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
 	
 	

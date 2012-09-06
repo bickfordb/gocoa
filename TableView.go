@@ -45,7 +45,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	windowsCount := (NSUInteger)(windowsArray.Call("count"))
 	var ix NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
-		window := windowsArray.CallI("objectAtIndex:", ix)
+		window := windowsArray.Call("objectAtIndex:", ix)
 		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 
@@ -56,6 +56,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	
 	
 	// add some stuff to the TableView
+	// XXX, tableview discovering only the first column
 	
 	arrayController := ClassForName("NSArrayController").Instance("alloc").Call("init")
 	dict := ClassForName("NSMutableDictionary").Instance("alloc").Call("init")

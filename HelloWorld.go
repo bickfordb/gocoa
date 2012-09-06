@@ -43,7 +43,7 @@ func BApplicationWillFinishLaunching(self C.id, op C.SEL, notification C.id) {
 	windowsCount := (NSUInteger)(windowsArray.Call("count"))
 	var ix NSUInteger
 	for ix = 0; ix < windowsCount; ix++ {
-		window := windowsArray.CallI("objectAtIndex:", ix)
+		window := windowsArray.Call("objectAtIndex:", ix)
 		window.Call("setTitle:", NSString("Form Loaded"))
 	}
 

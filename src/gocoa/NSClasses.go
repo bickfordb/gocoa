@@ -10,8 +10,7 @@ func NSDictionary(key string, value Object) Object {
 }
 
 func NSString(inString string) Object {
-	cStringPtr := (Object)(unsafe.Pointer(C.CString(inString)))	// XXX not an object, but need to pass it
-	return ClassForName("NSString").Instance("stringWithUTF8String:", cStringPtr)
+	return ClassForName("NSString").Instance("stringWithUTF8String:", (charptr)(unsafe.Pointer(C.CString(inString))))
 }
 
 func NSStringToString(inString Object) string {

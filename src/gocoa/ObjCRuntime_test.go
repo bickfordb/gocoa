@@ -282,9 +282,16 @@ func Test_Object_SetInstanceVariable(t *testing.T) {
 	
 	dude := NSString("foo")
 	subclass := ClassForName("NSObject").Subclass("NSSubclass")
+	
+	if subclass == 0 {
+		t.Log("subclass", subclass)
+		t.Fail()
+		return
+	}
 	subclass.AddIvar("someIvar", dude.Class())
-//	causes runtime error:
-//	subclass.Register()
+	//	causes runtime error:
+	subclass.Register()
+	
 	instance := subclass.Instance("alloc").Call("init")
 	instance.SetInstanceVariable("someIvar", dude)
 	ivar := instance.InstanceVariable("someIvar")
@@ -296,67 +303,37 @@ func Test_Object_SetInstanceVariable(t *testing.T) {
 
 
 
-// XXX this isn't getting at the meat of the issue
-func Object_I_Instance(cls Class, method string, args ...Passable) Object {
-	return ((Object)(cls)).I(method, args...)
-}
-func Test_Object_I(t *testing.T) {
-
-	bundle := Object_I_Instance(ClassForName("NSBundle"), "alloc")
-	bundle = bundle.I("initWithPath:", NSString("."))
-	if bundle == 0 {
-		t.Log("bundle", bundle)
-		t.Fail() 
-	}
-
-	someArray := Object_I_Instance(ClassForName("NSMutableArray"), "alloc").I("init")
-	if someArray == 0 {
-		t.Log("someArray", someArray)
-		t.Fail()
-	}
-	
-	someCount := (NSUInteger)(someArray.I("count"))
-	if someCount != 0 {
-		t.Log("someCount", someCount)
-		t.Fail()
-	}
-	
-	nilresult := bundle.I("initWithPath:", NSString("A String"), MakeNSRect(0,0,0,0), someArray, someCount, MakeNSBoolean(true))
-	if nilresult != 0 {
-		t.Log("nilresult", nilresult)
-		t.Fail()
-	}
-
-}
-
 func Test_Object_Call(t *testing.T) {
-	
+
+	t.Log("initbundle")
 	bundle := ClassForName("NSBundle").Instance("alloc").Call("initWithPath:", NSString("."))
 	if bundle == 0 {
 		t.Log("bundle", bundle)
 		t.Fail() 
 	}
-
+	
+	t.Log("initarray")
 	someArray := ClassForName("NSMutableArray").Instance("alloc").Call("init")
 	if someArray == 0 {
 		t.Log("someArray", someArray)
 		t.Fail()
 	}
 	
+	t.Log("getcount")
 	someCount := (NSUInteger)(someArray.Call("count"))
 	if someCount != 0 {
 		t.Log("someCount", someCount)
 		t.Fail()
 	}
-	/*
+	
 	// hangs
-	nilresult := bundle.Call("initWithPath:", NSString("A String"), Object(someArray), Object(someCount), Object(MakeNSBoolean(true)))
+	nilresult := bundle.Call("initWithPath:", NSString("A String"), someArray, someCount, MakeNSBoolean(true))
 	if nilresult != 0 {
 		t.Fail()
 	} else {
 		t.Log("nilresult", nilresult)
 	}
-	*/
+	
 } 
 
 func Test_Object_CallSuper(t *testing.T) {

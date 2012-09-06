@@ -11,9 +11,54 @@ package gocoa
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 
+static inline ffi_type* gocoa_ffiForNSType(char* nstype) {
+	if(strcmp(nstype, "I") == 0)
+		return &ffi_type_uint64;
+	else
+		return &ffi_type_pointer;
+}
+
 // beginnings of a proper solution, debugging
 static inline void gocoa_I(id self, SEL op, id* result, void* args[], char** types, int argsCount) {
-	printf("gocoa_I(%p, %p", self, op);
+//	printf("gocoa_I(%s, %s, %p", object_getClassName(self), sel_getName(op), *result);
+	
+	int			i;
+	ffi_cif		cif;
+	ffi_type	**ffi_types;
+	void		**ffi_values;
+		
+	ffi_types  = (ffi_type **) malloc((argsCount+2)*sizeof(ffi_type *));
+	ffi_values = (void **) malloc((argsCount+2)*sizeof(void *));
+	
+	ffi_types[0] = &ffi_type_pointer;
+	ffi_values[0] = &self;
+  	ffi_types[1] = &ffi_type_pointer;
+	ffi_values[1] = &op;
+	
+	for (i = 0; i < argsCount; i++) {
+//		printf(", %p ('%s')", args[i], types[i]);
+		ffi_types[2+i] = gocoa_ffiForNSType(types[i]);
+		if(ffi_types[2+i] == &ffi_type_pointer) {
+			ffi_values[2+i] = &args[i];
+		} else {
+			ffi_values[2+i] = args[i];
+		}
+	}
+	
+	if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argsCount+2, &ffi_type_pointer, ffi_types) == FFI_OK) {
+		ffi_call(&cif, (void (*)()) objc_msgSend, result, ffi_values);
+	}
+		
+	free(ffi_types);
+	free(ffi_values);
+	
+//	printf(", %d) out: %p (%s)\n", argsCount, *result, object_getClassName(*result));
+	
+}
+
+
+static inline void gocoa_ISuper(struct objc_super *super, SEL op, id* result, void* args[], char** types, int argsCount) {
+//	printf("gocoa_ISuper(%s, %s, %p", class_getName(super->class), sel_getName(op), *result);
 	
 	int			i;
 	ffi_cif		cif;
@@ -24,61 +69,30 @@ static inline void gocoa_I(id self, SEL op, id* result, void* args[], char** typ
 	ffi_values = (void **) malloc((argsCount+2)*sizeof(void *));
 	
 	ffi_types[0] = &ffi_type_pointer;
-	ffi_values[0] = &self;
+	ffi_values[0] = &super;
   	ffi_types[1] = &ffi_type_pointer;
 	ffi_values[1] = &op;
 	
 	for (i = 0; i < argsCount; i++) {
-		printf(", %p ('%s')", args[i], types[i]);
-		ffi_types[2+i] = &ffi_type_pointer;
-		ffi_values[2+i] = &args[i];
+//		printf(", %p ('%s')", args[i], types[i]);
+		ffi_types[2+i] = gocoa_ffiForNSType(types[i]);
+		if(ffi_types[2+i] == &ffi_type_pointer) {
+			ffi_values[2+i] = &args[i];
+		} else {
+			ffi_values[2+i] = args[i];
+		}
 	}
 	
-	if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argsCount+2, &ffi_type_uint, ffi_types) == FFI_OK) {
-		ffi_call(&cif, (void (*)()) objc_msgSend, result, ffi_values);
+	if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argsCount+2, &ffi_type_pointer, ffi_types) == FFI_OK) {
+		ffi_call(&cif, (void (*)()) objc_msgSendSuper, result, ffi_values);
 	} 
 	
 	free(ffi_types);
 	free(ffi_values);
 	
-	printf(", %d) out: %p\n", argsCount, result);
+//	printf(", %d) out: %p (%s)\n", argsCount, *result, object_getClassName(*result));
 }
 
-
-
-static inline id gocoa_objc_msgSendI(id self, SEL op, long message) {
-	return objc_msgSend(self, op, message);
-}
-
-static inline id gocoa_objc_msgSendR(id self, SEL op, CGRect message) {
-	return objc_msgSend(self, op, message);
-}
-
-static inline id gocoa_objc_msgSendSuperR(struct objc_super *super, SEL op, CGRect message) {
-	return objc_msgSendSuper(super, op, message);
-}
-
-static inline id gocoa_objc_msgSend(id self, SEL op, id messages[], int messagesLen) {
-	switch (messagesLen) {
-		case 1: return objc_msgSend(self, op, messages[0]);
-		case 2: return objc_msgSend(self, op, messages[0], messages[1]);
-		case 3: return objc_msgSend(self, op, messages[0], messages[1], messages[2]);
-		case 4: return objc_msgSend(self, op, messages[0], messages[1], messages[2], messages[3]);
-		case 5: return objc_msgSend(self, op, messages[0], messages[1], messages[2], messages[3], messages[4]);
-		default: return objc_msgSend(self, op);
-	}
-}
-
-static inline id gocoa_objc_msgSendSuper(struct objc_super *super, SEL op, id messages[], int messagesLen) {
-	switch (messagesLen) {
-		case 1: return objc_msgSendSuper(super, op, messages[0]);
-		case 2: return objc_msgSendSuper(super, op, messages[0], messages[1]);
-		case 3: return objc_msgSendSuper(super, op, messages[0], messages[1], messages[2]);
-		case 4: return objc_msgSendSuper(super, op, messages[0], messages[1], messages[2], messages[3]);
-		case 5: return objc_msgSendSuper(super, op, messages[0], messages[1], messages[2], messages[3], messages[4]);
-		default: return objc_msgSendSuper(super, op);
-	}
-}
 */
 import "C"
 
@@ -119,15 +133,12 @@ func (cls Class) Super() Class {
 	return (Class)(unsafe.Pointer(C.class_getSuperclass(cls.cclass())))
 }
 
-func (cls Class) Instance(method string, args ...Object) Object {
-	obj := (Object)(cls)
-	return obj.Call(method, args...)
-}
 
+/*
 func (cls Class) InstanceR(method string, arg NSRect) Object {
 	obj := (Object)(cls)
 	return obj.CallR(method, arg)
-}
+}*/
 
 func (cls Class) Ivar(name string) Ivar {
 	return (Ivar)(unsafe.Pointer(C.class_getInstanceVariable(cls.cclass(), C.CString(name))))
@@ -311,11 +322,7 @@ func (mthd Method) Name() string {
 	return C.GoString(C.sel_getName(C.method_getName(mthd.cmethod())))
 }
 
-/***************************************************************************************
-* Ivar
-* An Ivar is an Objective-C structure describing an instance variable, accessible via
-* object.InstanceVariable(name)
- */
+/* ivar methods *********************************************************************** */
 
 type Ivar uintptr
 
@@ -323,7 +330,7 @@ func (ivr Ivar) Name() string {
 	return C.GoString(C.ivar_getName((C.Ivar)(unsafe.Pointer(ivr))))
 }
 
-/* property methods ********************************************************************/
+/* property methods ******************************************************************* */
 
 type Property uintptr
 
@@ -336,52 +343,45 @@ func (prop Property) Attributes() string {
 }
 
 
-/* messaging functions *************************************************************** 
-*
-* There are a few hairy issues with the messaging funtions. First, the C funtion 
-* interface doesn't translate Go variadic functions, which is just as well, because
-* C variadic functions can accept variables of any type.
-*
-* The ultimate solution is to define a type of linked list in C that accepts arbitrary 
-* types, and one Go object method: Call(selector string, args...interface{}) that 
-* iterates over the argument list and uses reflect to unpack the arguments into the C 
-* list, then calls objc_msgSend.
-*
-* As I understand, other platforms possibly including the iPhone may require
-* objc_msgSend_stret and objc_msgSend_fret, and they certainly have slightly different 
-* data types, which will be something for consideration when fixing the following.
-*
-* As of yet, it's a mess that seems to work.
- */
+/* messaging functions *************************************************************** */
+
+// Better understanding of when to employ objc_msgSend_stret and objc_msgSend_fret
+// is going to be a prerequisite to calling this finished 
+
+func constructArgs(args...Passable) ([]unsafe.Pointer, []*C.char) {
+	items := make([]unsafe.Pointer, len(args))
+	types := make([]*C.char, len(args))
+
+	for i := 0; i < len(args); i++ {
+		types[i] = C.CString(args[i].TypeString())
+		items[i] = unsafe.Pointer(args[i].Ptr())
+	}
+	return items, types
+}
+
+type superStruct struct {
+	receiver Object
+	class    Class
+}
+
 
 // one possibility is that this always returns an object, always converting structs to 
-// pointers on output, seems the general case
-func (obj Object) I(selector string, args ...Passable) Object {
+// pointers on output, assuming that the runtime can generally use them on input
+// this is really loosening the type system, what am I going to do about dereferencing pointers on input?
+// add a "dereference" method that does typechecking?
+// how do I distinguish between types that dereference those that don't?
+func (obj Object) Call(selector string, args ...Passable) Object {
+//	if obj == 0 {
+//		panic("can't call with nil class pointer")
+//	}
 	
 	var result C.id
 	sel := C.sel_registerName(C.CString(selector))
 	
 	if len(args) > 0 {
-	
-		items := make([]unsafe.Pointer, len(args))
-		types := make([]*C.char, len(args))
-
-		for i := 0; i < len(args); i++ {
-
-			value := reflect.ValueOf(args[i])
-			types[i] = C.CString(args[i].TypeString())
-
-			if value.String() == "<gocoa.Object Value>" {
-				items[i] = unsafe.Pointer(args[i].Id())
-			} else {
-				items[i] = unsafe.Pointer(&(args[i].Bytes()[0]))
-			}
-		}
-		
+		items, types := constructArgs(args...)
 		C.gocoa_I(obj.cid(), sel, &result, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
-	
 	} else {
-		
 		result = C.objc_msgSend(obj.cid(), sel)
 	}
 		
@@ -390,63 +390,42 @@ func (obj Object) I(selector string, args ...Passable) Object {
 }
 
 /*
-* Call()
-* Notice that you have to pass a pointer to the first array element to match the c array calling convention.
-*/
-func (obj Object) Call(method string, args ...Object) Object {
-	sel := C.sel_registerName(C.CString(method))
-	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSend(obj.cid(), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
-	}
-	return (Object)(unsafe.Pointer(C.objc_msgSend(obj.cid(), sel)))
-} 
-
-
-
-// clumsy hacks abound
-
-type superStruct struct {
-	receiver Object
-	class    Class
-}
-
-// XXX all of these are pointless, fix
-func (obj Object) CallR(method string, arg NSRect) Object {
-	sel := C.sel_registerName(C.CString(method))
-	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendR(obj.cid(), sel, arg.CGRect())))
-}
-
-func (obj Object) CallI(method string, arg NSUInteger) Object {
-	sel := C.sel_registerName(C.CString(method))
-	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendI(obj.cid(), sel, (C.long)(arg))))
-}
-
-
-/*
-* CallSuper()
 * The distinction here involves messaging to superclasses, with message receipt to the subclass. This
 * requires initing a structure that refers to both the receiver and its superclass. 
  */
-func (obj Object) CallSuper(method string, args ...Object) Object {
-	var super superStruct
-	super.receiver = obj
-	super.class = obj.Class().Super()
-
-	sel := C.sel_registerName(C.CString(method))
-	if len(args) > 0 { // due to cgo calling convention, can't pass an empty array
-		return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, (*C.id)(unsafe.Pointer(&args[0])), (C.int)(len(args)))))
+func (obj Object) CallSuper(method string, args ...Passable) Object {
+	if obj == 0 {
+		panic("can't call super with nil object pointer")
 	}
-	return (Object)(unsafe.Pointer(C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)))
-}
-
-func (obj Object) CallSuperR(method string, arg NSRect) Object {
+	if obj.Class().Super() == 0 {
+		panic("can't call super with nil superclass pointer")
+	}
+	
 	var super superStruct
 	super.receiver = obj
 	super.class = obj.Class().Super()
+		
+	var result C.id
 	sel := C.sel_registerName(C.CString(method))
-	return (Object)(unsafe.Pointer(C.gocoa_objc_msgSendSuperR((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, arg.CGRect())))
+	
+	if len(args) > 0 {
+		items, types := constructArgs(args...)
+		C.gocoa_ISuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel, &result, &items[0], (**C.char)(&types[0]), (C.int)(len(items)))
+	} else {
+		result = C.objc_msgSendSuper((*C.struct_objc_super)(unsafe.Pointer(&super)), sel)
+	}
+	
+	// XXX output conversion needed
+	return (Object)(unsafe.Pointer(result))
 }
 
+
+func (cls Class) Instance(method string, args ...Passable) Object {
+	if cls == 0 {
+		panic("can't instantiate with nil class pointer")
+	}
+	return (Object)(cls).Call(method, args...)
+}
 
 
 /*
