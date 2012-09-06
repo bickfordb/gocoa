@@ -11,11 +11,28 @@ package gocoa
 #include <objc/objc-runtime.h>
 #include <CoreGraphics.h>
 
+
+// for the ambitious, the complete solution would be to build a ffi_type compiler for objc type strings
 static inline ffi_type* gocoa_ffiForNSType(char* nstype) {
-	if(strcmp(nstype, "I") == 0)
+	if(strcmp(nstype, "{_NSRect={_NSPoint=ff}{_NSSize=ff}}") == 0) {
+		ffi_type*	result = (ffi_type*) malloc(sizeof(ffi_type));
+		ffi_type**	type_elements = (ffi_type**) malloc(sizeof(ffi_type*) * 5);
+		result->size = result->alignment = 0;
+		result->type = FFI_TYPE_STRUCT;
+		type_elements[0] = &ffi_type_double;
+		type_elements[1] = &ffi_type_double;
+		type_elements[2] = &ffi_type_double;
+		type_elements[3] = &ffi_type_double;
+		type_elements[4] = NULL;
+		result->elements = type_elements;
+		return result;
+	} else if(strcmp(nstype, "B") == 0) {
+		return &ffi_type_uint8;
+	} else if(strcmp(nstype, "I") == 0) {
 		return &ffi_type_uint64;
-	else
+	} else {
 		return &ffi_type_pointer;
+	}
 }
 
 // beginnings of a proper solution, debugging
@@ -132,13 +149,6 @@ func (cls Class) Name() string {
 func (cls Class) Super() Class {
 	return (Class)(unsafe.Pointer(C.class_getSuperclass(cls.cclass())))
 }
-
-
-/*
-func (cls Class) InstanceR(method string, arg NSRect) Object {
-	obj := (Object)(cls)
-	return obj.CallR(method, arg)
-}*/
 
 func (cls Class) Ivar(name string) Ivar {
 	return (Ivar)(unsafe.Pointer(C.class_getInstanceVariable(cls.cclass(), C.CString(name))))
@@ -367,9 +377,6 @@ type superStruct struct {
 
 // one possibility is that this always returns an object, always converting structs to 
 // pointers on output, assuming that the runtime can generally use them on input
-// this is really loosening the type system, what am I going to do about dereferencing pointers on input?
-// add a "dereference" method that does typechecking?
-// how do I distinguish between types that dereference those that don't?
 func (obj Object) Call(selector string, args ...Passable) Object {
 //	if obj == 0 {
 //		panic("can't call with nil class pointer")

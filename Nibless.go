@@ -8,8 +8,7 @@ import (
 )
 
 /*
-* main()
-* A minimal nibless Cocoa application, bypasses Interface Builder
+* main() A minimal nibless Cocoa application, bypasses Interface Builder
  */
 func main() {
 
@@ -22,19 +21,18 @@ func main() {
 	appName := ClassForName("NSProcessInfo").Instance("processInfo").Call("processName")
 	quitTitle := NSString("Quit ").Call("stringByAppendingString:", appName)
 	quitMenuItem := ClassForName("NSMenuItem").Instance("alloc")
-	//	third argument wants: SelectorForName("terminate:")
-	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, (Object)(0), NSString("q"))
+	
+	quitMenuItem.Call("initWithTitle:action:keyEquivalent:", quitTitle, SelectorForName("terminate:"), NSString("q"))
 	appMenu.Call("addItem:", quitMenuItem)
 	appMenuItem.Call("setSubmenu:", appMenu)
 	window := ClassForName("NSWindow").Instance("alloc")
 
-	window.Call("init")
-	//	wants: window.Call("initWithContentRect:styleMask:backing:defer:", NSMakeRect(0, 0, 200, 200), 
-	//		NSTitledWindowMask, NSBackingStoreBuffered, NSBoolean(false)).Call("autorelease")
-	//	wants: window.Call("cascadeTopLeftFromPoint:", NSPoint{20,20})
+	window.Call("initWithContentRect:styleMask:backing:defer:", MakeNSRect(0, 0, 200, 200), NSTitledWindowMask, NSBackingStoreBuffered, MakeNSBoolean(false))
+	window.Call("cascadeTopLeftFromPoint:", NSPoint{20,20})
 	window.Call("setTitle:", appName)
 	window.Call("makeKeyAndOrderFront:", (Object)(0))
-	//	wants: app.Call("activateIgnoringOtherApps:", NSBoolean(true))
+	
+	app.Call("activateIgnoringOtherApps:", MakeNSBoolean(true))
 	app.Call("run")
 
 }

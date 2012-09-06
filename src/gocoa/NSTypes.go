@@ -49,8 +49,8 @@ func MakeNSSize(Width float64, Height float64) NSSize {
 	return NSSize{Width, Height}
 }
 
-func (nss NSSize) TypeString() string	{ return "{_NSSize=ff}" }
-func (nss NSSize) Ptr() uintptr		{ return (uintptr)(unsafe.Pointer(&nss)) }
+func (nss NSSize) TypeString() string		{ return "{_NSSize=ff}" }
+func (nss NSSize) Ptr() uintptr				{ return (uintptr)(unsafe.Pointer(&nss)) }
 
 
 /* NSPoint *************************************************************************/
@@ -68,7 +68,7 @@ func MakeNSPoint(X float64, Y float64) NSPoint {
 
 // implement passable
 func (nsp NSPoint) TypeString() string		{ return "{_NSPoint=ff}" }
-func (nsp NSPoint) Ptr() uintptr		{ return (uintptr)(unsafe.Pointer(&nsp)) }
+func (nsp NSPoint) Ptr() uintptr			{ return (uintptr)(unsafe.Pointer(&nsp)) }
 
 /* NSRect **************************************************************************/
 
@@ -85,7 +85,7 @@ func MakeNSRect(X float64, Y float64, Width float64, Height float64) NSRect {
 
 // implement passable
 func (nsr NSRect) TypeString() string	{ return "{_NSRect={_NSPoint=ff}{_NSSize=ff}}" }
-func (nsr NSRect) Ptr() uintptr		{ return (uintptr)(unsafe.Pointer(&nsr)) }
+func (nsr NSRect) Ptr() uintptr			{ return (uintptr)(unsafe.Pointer(&nsr)) }
 
 
 // convert to/from CGRect
