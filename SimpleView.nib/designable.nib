@@ -36,9 +36,6 @@
 			<object class="NSCustomObject" id="1050">
 				<string key="NSClassName">NSApplication</string>
 			</object>
-			<object class="NSCustomObject" id="692660008">
-				<string key="NSClassName">Controller</string>
-			</object>
 			<object class="NSCustomObject" id="163992474">
 				<string key="NSClassName">NSFontManager</string>
 			</object>
@@ -1279,7 +1276,7 @@
 				<nil key="NSViewClass"/>
 				<nil key="NSUserInterfaceItemIdentifier"/>
 				<object class="NSView" key="NSWindowView" id="414427165">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSCustomView" id="999491364">
@@ -1287,14 +1284,11 @@
 							<int key="NSvFlags">268</int>
 							<string key="NSFrameSize">{480, 270}</string>
 							<reference key="NSSuperview" ref="414427165"/>
-							<reference key="NSWindow"/>
 							<string key="NSReuseIdentifierKey">_NS:9</string>
 							<string key="NSClassName">SimpleView</string>
 						</object>
 					</array>
 					<string key="NSFrameSize">{480, 270}</string>
-					<reference key="NSSuperview"/>
-					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="999491364"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1920, 1058}}</string>
@@ -1921,14 +1915,6 @@
 					<int key="connectionID">822</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">delegate</string>
-						<reference key="source" ref="513744381"/>
-						<reference key="destination" ref="692660008"/>
-					</object>
-					<int key="connectionID">837</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
 						<string key="label">addFontTrait:</string>
 						<reference key="source" ref="163992474"/>
@@ -1967,14 +1953,6 @@
 						<reference key="destination" ref="926861345"/>
 					</object>
 					<int key="connectionID">424</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">itsView</string>
-						<reference key="source" ref="692660008"/>
-						<reference key="destination" ref="999491364"/>
-					</object>
-					<int key="connectionID">823</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -3045,12 +3023,6 @@
 						<reference key="parent" ref="907032324"/>
 					</object>
 					<object class="IBObjectRecord">
-						<int key="objectID">823</int>
-						<reference key="object" ref="692660008"/>
-						<reference key="parent" ref="0"/>
-						<string key="objectName">Controller</string>
-					</object>
-					<object class="IBObjectRecord">
 						<int key="objectID">824</int>
 						<reference key="object" ref="999491364"/>
 						<reference key="parent" ref="414427165"/>
@@ -3238,7 +3210,6 @@
 				<string key="814.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="82.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="821.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
-				<string key="823.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<boolean value="NO" key="824.IBNSViewMetadataTranslatesAutoresizingMaskIntoConstraints"/>
 				<string key="824.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="83.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>

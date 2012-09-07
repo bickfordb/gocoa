@@ -13,6 +13,7 @@ package gocoa
 
 
 // for the ambitious, the complete solution would be to build a ffi_type compiler for objc type strings
+// XXX irresponsible with memory
 static inline ffi_type* gocoa_ffiForNSType(char* nstype) {
 	if(strcmp(nstype, "{_NSRect={_NSPoint=ff}{_NSSize=ff}}") == 0) {
 		ffi_type*	result = (ffi_type*) malloc(sizeof(ffi_type));
