@@ -27,29 +27,11 @@ examples
 * WebKit? forthcoming...
 
 
-To run any of the examples use, for example:
+To run the examples use, for example:
 
 	export GOPATH=`pwd` 
 	go build -o hello HelloWorld.go
 	./hello 
-
-
-nibble
-------
-
-Nibble edits .nib files and prints the result to stdout. .nib files are, conveniently, these days .xib files defined in XML. What this buys you is the ability to add IB outlets, actions and delegates without creating an Objective-C class, writing a header, defining your outlets programmatically, and then letting Interface Builder import them for you. That's tedious and stupid when you know what you're doing.
-
-Like a cowboy, you can just draw your app in IB, drag some custom objects on the thing, connect them with something you define later in Go, and smash them together with nibble. For example:
-
-	nibble -a outlet mainWindow ApplicationController NSWindowTemplate designable.nib > out.nib
-
-Adds an outlet, 'mainWindow' from 'ApplicationController' to NSWindowTemplate. Or, more commonly:
-
-	nibble -a appdelegate ApplicationController designable.nib > out.nib
-
-Connects 'ApplicationController' as delegate to NSApplication, allowing it to receive and handle events.
-
-If you don't like bugs, don't use nibble just yet. There are some limitations in the feature set, error handling isn't robust, and I'd like to write some formal tests before calling it finished.
 
 
 license
