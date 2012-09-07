@@ -9,7 +9,6 @@ package main
 import "C"
 
 import (
-	"fmt"
 	. "gocoa"
 	"unsafe"
 )
@@ -36,7 +35,6 @@ func IInitWithFrame(self C.id, op C.SEL, aRect C.CGRect) C.id {
 //export VDrawRect
 func VDrawRect(self C.id, op C.SEL, aRect C.CGRect) {
 rect := TypeNSRect(aRect)
-	fmt.Println("drawRect:", rect)
 	
 	NSColor(WhiteColor).Call("set")
 	ClassForName("NSBezierPath").Instance("fillRect:", rect)
@@ -62,14 +60,8 @@ func main() {
 	app := ClassForName("NSApplication").Instance("sharedApplication")
 	bundle := ClassForName("NSBundle").Instance("alloc")
 	dict := NSDictionary("NSOwner", app)
-
-	fmt.Printf("dict %p\n", unsafe.Pointer(dict))
-	fmt.Printf("bundle %p\n", unsafe.Pointer(bundle))
 	
-	thePath := NSString(".")
-	fmt.Printf("thePath %p\n", unsafe.Pointer(thePath))
-	bundle = bundle.Call("initWithPath:", thePath)
-	
+	bundle = bundle.Call("initWithPath:", NSString("."))
 	bundle.Call("loadNibFile:externalNameTable:withZone:", NSString("SimpleView"), dict, app.Call("zone"))
 	
 	app.Call("run")

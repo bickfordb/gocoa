@@ -286,11 +286,10 @@ func Test_Object_SetInstanceVariable(t *testing.T) {
 	if subclass == 0 {
 		t.Log("subclass", subclass)
 		t.Fail()
-		return
 	}
 	subclass.AddIvar("someIvar", dude.Class())
-	//	causes runtime error:
-	subclass.Register()
+	// XXX causes runtime hang:
+/*	subclass.Register()
 	
 	instance := subclass.Instance("alloc").Call("init")
 	instance.SetInstanceVariable("someIvar", dude)
@@ -298,7 +297,10 @@ func Test_Object_SetInstanceVariable(t *testing.T) {
 	if ivar == 0 {
 		t.Log("ivar", ivar)
 		t.Fail()
-	}
+	}*/
+	
+	t.Log("runtime hang case not tested")
+	t.Fail()
 }
 
 
@@ -336,17 +338,19 @@ func Test_Object_Call(t *testing.T) {
 	
 } 
 
+
 func Test_Object_CallSuper(t *testing.T) {
 	
 	bundle := ClassForName("NSBundle").Instance("alloc").Call("initWithPath:", NSString("."))
-	nso := ClassForName("NSObject").Instance("alloc").Call("init")
+//	nso := ClassForName("NSObject").Instance("alloc").Call("init")
 	
 	if bundle == 0 {
 		t.Log("bundle", bundle)
 		t.Fail() 
 	}
-	
- 	nso2 := bundle.CallSuper("init")
+
+// XXX hang
+/* 	nso2 := bundle.CallSuper("init")
 	
 	if nso2 == 0 {
 		t.Log("nso2", nso2)
@@ -362,8 +366,10 @@ func Test_Object_CallSuper(t *testing.T) {
 	if len(nso.Class().Methods()) != len(nso2.Class().Methods()) {
 		t.Log("nso", len(nso.Class().Methods()), "nso2", len(nso2.Class().Methods()))
 		t.Fail() 
-	}
+	}*/
 	
+	t.Log("runtime hang case not tested")
+	t.Fail()
 }
 
 
