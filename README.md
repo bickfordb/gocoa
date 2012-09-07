@@ -10,18 +10,21 @@ You can get a quick synopsis of the current status with:
 
 	go test gocoa
 
-The Objective-C runtime interface is settling down a bit as I become more familiar with the Go language, its capabilities and limitations. A problem with the Go linker isn't a showstopper, but requires some dancing around. I've also written some dumb code to get things working quickly. With a test framework in place, I can replace it.
+The package isn't yet go-gettable because there are crashers and missing fundamental types. Just download the zipfile and set a local GOPATH to the current working directory. I don't want you to put this code in your pkg directory, it's ready to play with, but not ready for work.
+
+The Objective-C runtime interface I've defined is settling down now, but there are some details I want to consider before baking anything else in.
+
+A problem with the Go linker isn't a showstopper, but requires some dancing around with export names. I know that substantial changes to the linker are coming in a future Go version anyway, so a fix may be forthcoming besides.
 
 
 examples
 --------
 
-* HelloWorld.go demonstrates messaging and events between Go code and Interface Builder controls.
-* SimpleView.go (broken) displays a subclass NSView defined in Interface Builder and responds to drawRect: requests from NSApplication.
-* TableView.go displays and adds arbitrary data to a NSTableView defined in Interface Builder.
-* Nibless.go defines its UI in code rather than using Interface Builder.
-
-...and what I really should be working on is getting an example using WebKit working. That's where Go's rubber meets the road.
+* HelloWorld.go demonstrates messaging and events between Go code and Interface Builder controls
+* SimpleView.go displays a subclass NSView and responds to drawRect: requests from NSApplication
+* TableView.go displays and adds arbitrary data to a NSTableView defined in Interface Builder (broken)
+* Nibless.go defines its UI in code rather than using Interface Builder
+* WebKit? forthcoming...
 
 
 To run any of the examples use, for example:
